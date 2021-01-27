@@ -10,11 +10,11 @@ import rclpy.qos as qos
 class saver(Node):
     def __init__(self):
         super().__init__("saver")
-        self.profile1 = qos.QoSProfile(reliability=qos.QoSReliabilityPolicy.BEST_EFFORT)
-        self.im_subscriber = self.create_subscription(Image, "/zenith_camera/image_raw", self.im_callback, qos_profile=self.profile1)
-        self.profile2 = qos.QoSProfile()
-        self.str_subscriber = self.create_subscription(Int32, "/cmd", self.str_callback, qos_profile=self.profile2)
-        self.cmd = 0
+        self.profile = qos.QoSPresetProfiles.get_from_short_key('SENSOR_DATA')
+        print(type(self.profile))
+        self.im_subscriber = self.create_subscription(Image, "/zenith_camera/image_raw", self.im_callback, qos_profile=self.profile)
+        self.str_subscriber = self.create_subscription(Int32, "/cmd", self.str_callback, qos_profile=self.profile)
+        self.cmd = 1
         self.spin = True
 
     def str_callback(self, msg):
@@ -25,15 +25,10 @@ class saver(Node):
         print("clb_im")
         bridge = cv_bridge.CvBridge()
         cv_im = bridge.imgmsg_to_cv2(msg.data)
-        if self.cmd == 1:
-            print("cmd = 1, affichage window")
-            cv2.imshow("cv_im", cv_im)
-        elif self.cmd == 2:
-            cv2.imwrite("/home/user/Documents/UE5.8/CrabeBot_ws/src/TennisBallCollector/image_saver/data/im001.png", cv_im)
-            self.spin = False
-            print("sauvegarde done")
-        elif self.cmd == 0:
-            cv2.destroyAllWindows()
+        print("affichage window")
+        cv2.imshow("cv_im", cv_im)
+        self.spin = False
+        
 
 def main(args=None):
     rclpy.init(args=args)
