@@ -2,6 +2,7 @@
 <sdf version="1.6">
     <world name="default">
         <scene>
+            <shadows>false</shadows>
             <sky>
                 <clouds>
                     <speed>12</speed>
