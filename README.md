@@ -21,9 +21,10 @@ OpenCV 4.2
 ## Groupe
 
 ### Membres
-
-###### A compléter avec les membres du groupe.
-
+Baumgard Colin
+Flechard Romane
+Hacene Hamid
+Lemoine Corentin
 
 ### Gestion de projet
 
