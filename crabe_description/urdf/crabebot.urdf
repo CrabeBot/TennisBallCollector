@@ -18,41 +18,37 @@
         <material>Gazebo/FlatBlack</material>
     </xacro:macro>
 
+    <!-- Scale -->
+    <xacro:property name="scale" value="2" />
+
     <!-- box -->
-    <xacro:property name="l_body" value="0.4" />
-    <xacro:property name="L_body" value="0.3" />
-    <xacro:property name="h_body" value="0.1" />    
-    <xacro:property name="m_body" value="10.0" />
-    <xacro:property name="hauteur_chassis" value="1.5" />
-    <xacro:property name="hauteur_benne" value="0.5" />
+    <xacro:property name="l_body" value="${0.4*scale}" />
+    <xacro:property name="L_body" value="${0.3*scale}" />
+    <xacro:property name="h_body" value="${0.1*scale}" />    
+    <xacro:property name="m_body" value="${scale**3*1.0}" />
     <!-- roues -->
-    <xacro:property name="r_wheel" value="0.1" />
-    <xacro:property name="h_wheel" value="0.05" />
-    <xacro:property name="eps_wheel" value="0.01" />
-    <xacro:property name="m_wheel" value="1.0" />
+    <xacro:property name="r_wheel" value="${scale*0.1}" />
+    <xacro:property name="h_wheel" value="${scale*0.05}" />
+    <xacro:property name="eps_wheel" value="${scale*0.01}" />
+    <xacro:property name="m_wheel" value="${scale**3*.4}" />
 
     <!-- cibles -->
-    <xacro:property name="r_cible" value="0.05" />
-    <xacro:property name="h_cible" value="0.05" />
-    <xacro:property name="m_cible" value="0.01" />
+    <xacro:property name="r_cible" value="${scale*0.05}" />
+    <xacro:property name="h_cible" value="${scale*0.05}" />
+    <xacro:property name="m_cible" value="${scale*0.01}" />
 
 
     <!-- arm -->
-    <xacro:property name="l_arm" value="0.3" />
-    <xacro:property name="L_arm" value="0.01" />
-    <xacro:property name="h_arm" value="0.1" />
+    <xacro:property name="l_arm" value="${scale*0.3}" />
+    <xacro:property name="L_arm" value="${scale*0.01}" />
+    <xacro:property name="h_arm" value="${scale*0.08}" />
     <xacro:property name="alpha_arm" value="${pi/4}" />
-    <xacro:property name="m_arm" value="0.1" />
+    <xacro:property name="m_arm" value="${scale**3*0.1}" />
     
-        
-    <!-- arm_wheel -->  
-    <xacro:property name="r_aw" value="0.01" />
-    <xacro:property name="h_aw" value="0.05" />
-    <xacro:property name="m_aw" value="0.01" />
 
     <!-- Free wheel -->
-    <xacro:property name="free_r" value="0.05" />
-    <xacro:property name="free_m" value="1" />
+    <xacro:property name="r_free" value="${scale*0.05}" />
+    <xacro:property name="m_free" value="${scale**3*1}" />
 
 
 
@@ -70,7 +66,7 @@
         <inertial>
             <origin xyz="0 0 0" rpy="0 0 0"/>
             <mass value="${m_body}"/>
-            <inertia ixx="${m_body*(h_body*h_body+L_body*L_body)/12}" ixy="0.0" ixz="0.0" iyy="${m_body*(h_body*h_body+l_body*l_body)/12}" iyz="0.0" izz="${m_body*(L_body*L_body+l_body*l_body)/12}"/>
+            <inertia ixx="${m_body*(h_body**2+L_body**2)/12}" ixy="0.0" ixz="0.0" iyy="${m_body*(h_body**2+l_body**2)/12}" iyz="0.0" izz="${m_body*(L_body**2+l_body**2)/12}"/>
         </inertial>
         <collision>
             <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -94,7 +90,7 @@
         <inertial>
             <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
             <mass value="${m_wheel}"/>
-            <inertia ixx="${m_wheel*(3*r_wheel*r_wheel+h_wheel*h_wheel)/12}" ixy="0.0" ixz="0.0" iyy="${m_wheel*(3*r_wheel*r_wheel+h_wheel*h_wheel)/12}" iyz="0.0" izz="${m_wheel*r_wheel*r_wheel/2}"/>
+            <inertia ixx="${m_wheel*(3*r_wheel**2+h_wheel**2)/12}" ixy="0.0" ixz="0.0" iyy="${m_wheel*(3*r_wheel**2+h_wheel**2)/12}" iyz="0.0" izz="${m_wheel*r_wheel**2/2}"/>
         </inertial>
         <collision>
             <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
@@ -117,7 +113,7 @@
         <inertial>
             <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
             <mass value="${m_wheel}"/>
-            <inertia ixx="${m_wheel*(3*r_wheel*r_wheel+h_wheel*h_wheel)/12}" ixy="0.0" ixz="0.0" iyy="${m_wheel*(3*r_wheel*r_wheel+h_wheel*h_wheel)/12}" iyz="0.0" izz="${m_wheel*r_wheel*r_wheel/2}"/>
+           <inertia ixx="${m_wheel*(3*r_wheel**2+h_wheel**2)/12}" ixy="0.0" ixz="0.0" iyy="${m_wheel*(3*r_wheel**2+h_wheel**2)/12}" iyz="0.0" izz="${m_wheel*r_wheel**2/2}"/>
         </inertial>
         <collision>
             <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
@@ -222,17 +218,17 @@
     <link name="caster_wheel">
         <visual>
             <geometry>
-                    <sphere radius="${free_r}"/>
+                    <sphere radius="${r_free}"/>
             </geometry>
         </visual>
         <collision>
         <geometry>            
-            <sphere radius="${free_r}"/>
+            <sphere radius="${r_free}"/>
             </geometry>
         </collision>
         <inertial>
-            <mass value="${free_m}"/>
-            <inertia ixx="${2*free_m*free_r*free_r/5}" ixy="0.0" ixz="0.0" iyy="${2*free_m*free_r*free_r/5}" iyz="0.0" izz="${2*free_m*free_r*free_r/5}"/>
+            <mass value="${m_free}"/>
+            <inertia ixx="${2*m_free*r_free**2/5}" ixy="0.0" ixz="0.0" iyy="${2*m_free*r_free**2/5}" iyz="0.0" izz="${2*m_free*r_free**2/5}"/>
         </inertial>
     </link>
     <gazebo reference="caster_wheel">
@@ -244,14 +240,14 @@
     <joint name="Body_L_wheel" type="continuous">
         <parent link="body"/>
         <child link="L_wheel"/>
-        <origin xyz="0.1 ${L_body/2+eps_wheel} ${-h_body/2}"/>
+        <origin xyz="${l_body/4} ${L_body/2+h_wheel/2+eps_wheel} ${-h_body/2}"/>
         <axis xyz="0 1 0"/>
     </joint>
 
     <joint name="Body_R_wheel" type="continuous">
         <parent link="body"/>
         <child link="R_wheel"/>
-        <origin xyz="0.1 -${L_body/2+eps_wheel} ${-h_body/2}"/>
+        <origin xyz="${l_body/4} -${L_body/2+h_wheel/2+eps_wheel} ${-h_body/2}"/>
         <axis xyz="0 1 0"/>
     </joint>
 
@@ -259,30 +255,30 @@
     <joint name="body_cible_verte" type="fixed">
         <parent link="body"/>
         <child link="cible_verte"/>
-        <origin xyz="-0.15 0.1 ${h_body/2}"/>
+        <origin xyz="-${3*l_body/8} ${L_body/3} ${h_body/2}"/>
     </joint>
 
     <joint name="body_cible_rouge" type="fixed">
         <parent link="body"/>
         <child link="cible_rouge"/>
-        <origin xyz="-0.15 -0.1 ${h_body/2}"/>
+        <origin xyz="-${3*l_body/8} -${L_body/3} ${h_body/2}"/>
     </joint>
 
     <joint name="body_L_arm" type="fixed">
-        <origin xyz="${l_body/2} ${L_body/2*cos(alpha_arm)} -0.09" rpy="0 0 ${alpha_arm}"/>
+        <origin xyz="${l_body/2} ${L_body/2*cos(alpha_arm)} -${h_body/2+h_arm/2-0.01}" rpy="0 0 ${alpha_arm}"/>
         <parent link="body"/>
         <child link="Left_arm"/>
     </joint>
 
     <joint name="body_R_arm" type="fixed">
-        <origin xyz="${l_body/2} -${L_body/2*cos(alpha_arm)} -0.09" rpy="0 0 -${alpha_arm}"/>
+        <origin xyz="${l_body/2} -${L_body/2*cos(alpha_arm)} -${h_body/2+h_arm/2-0.01}" rpy="0 0 -${alpha_arm}"/>
         <parent link="body"/>
         <child link="Right_arm"/>
     </joint>
 
 
     <joint name="base_casterWheel" type="fixed">
-        <origin xyz="-0.15 0 -${free_r + h_body/2}"/>
+        <origin xyz="-${3*l_body/8} 0 -${r_free + h_body/2}"/>
         <parent link="body"/>
         <child link="caster_wheel"/>
     </joint>
