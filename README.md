@@ -5,9 +5,9 @@ Ceci est un template de dépôt Git pour le cours d'ingénierie système et mod�
 
 ## Lancer la simulation
 
-### Dépendences
-
-###### A compléter avec la/les dépendences.
+### Dépendances
+ros-foxy-navigation2 ros-foxy-nav2-bringup
+OpenCV 4.2
 
 
 ### Démarrer la simulation
