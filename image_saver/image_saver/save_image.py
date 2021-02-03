@@ -4,29 +4,27 @@ from std_msgs.msg import Int32
 from sensor_msgs.msg import Image, CameraInfo
 import cv_bridge
 import cv2
-import rclpy.qos as qos
+from rclpy.qos import qos_profile_sensor_data
+
+import rclpy
+from rclpy.node import Node
+
+from std_msgs.msg import String
 
 
 class saver(Node):
     def __init__(self):
         super().__init__("saver")
-        self.profile = qos.QoSPresetProfiles.get_from_short_key('SENSOR_DATA')
-        print(type(self.profile))
+        self.profile = qos_profile_sensor_data
         self.im_subscriber = self.create_subscription(Image, "/zenith_camera/image_raw", self.im_callback, qos_profile=self.profile)
-        self.str_subscriber = self.create_subscription(Int32, "/cmd", self.str_callback, qos_profile=self.profile)
-        self.cmd = 1
-        self.spin = True
-
-    def str_callback(self, msg):
-        print("\tclb_str")
-        self.cmd = msg.data
 
     def im_callback(self, msg):
-        print("clb_im")
         bridge = cv_bridge.CvBridge()
-        cv_im = bridge.imgmsg_to_cv2(msg.data)
+        cv_im = bridge.imgmsg_to_cv2(msg)
         print("affichage window")
         cv2.imshow("cv_im", cv_im)
+        cv2.imwrite("image.png", cv_im)
+        cv2.waitKey()
         self.spin = False
         
 
@@ -34,10 +32,11 @@ def main(args=None):
     rclpy.init(args=args)
     node = saver()
     
-    rate = node.create_rate(10)
-    while node.spin:
-        rate.sleep()
+    rclpy.spin_once(node)
 
+    # Destroy the node explicitly
+    # (optional - otherwise it will be done automatically
+    # when the garbage collector destroys the node object)
     node.destroy_node()
     rclpy.shutdown()
 
