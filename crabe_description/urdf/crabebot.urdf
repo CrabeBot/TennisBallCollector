@@ -2,13 +2,19 @@
 
 <robot name="crabe" xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-    <xacro:macro name="mat2">
-        <mu1>0.15</mu1>
-        <mu2>0.15</mu2>
+   <xacro:macro name="mat1">
+        <mu1>1.2</mu1>
+        <mu2>1.2</mu2>
         <kp>500000.0</kp>
         <kd>10.0</kd>
         <minDepth>0.001</minDepth>
         <maxVel>0.1</maxVel>
+        <material>Gazebo/FlatBlack</material>
+    </xacro:macro>
+
+    <xacro:macro name="mat2">
+        <mu1>0.5</mu1>
+        <mu2>0.09</mu2>
         <material>Gazebo/FlatBlack</material>
     </xacro:macro>
 
@@ -31,30 +37,18 @@
     <xacro:property name="m_cible" value="0.01" />
 
 
-    <!-- aileron -->
-    <xacro:property name="l_aileron" value="0.2" />
-    <xacro:property name="L_aileron" value="0.5" />
-    <xacro:property name="h_aileron" value="0.05" />    
-    <xacro:property name="m_aileron" value="0.5" />
-
     <!-- arm -->
     <xacro:property name="l_arm" value="0.3" />
     <xacro:property name="L_arm" value="0.01" />
-    <xacro:property name="h_arm" value="0.2" />
-    <xacro:property name="alpha_arm" value="${pi/6}" />
+    <xacro:property name="h_arm" value="0.1" />
+    <xacro:property name="alpha_arm" value="${pi/4}" />
     <xacro:property name="m_arm" value="0.1" />
     
         
-    <!-- Benne -->
-    <xacro:property name="benne1X" value="0.1" />
-    <xacro:property name="benne1Y" value="0.8" />
-    <xacro:property name="benne1Z" value="0.2" />
-    <xacro:property name="benne1_m" value="4" />
-
-    <xacro:property name="benne2X" value="0.5" />
-    <xacro:property name="benne2Y" value="0.1" />
-    <xacro:property name="benne2Z" value="${benne1Z}" />
-    <xacro:property name="benne2_m" value="3" />
+    <!-- arm_wheel -->  
+    <xacro:property name="r_aw" value="0.01" />
+    <xacro:property name="h_aw" value="0.05" />
+    <xacro:property name="m_aw" value="0.01" />
 
     <!-- Free wheel -->
     <xacro:property name="free_r" value="0.05" />
@@ -110,13 +104,7 @@
         </collision>
     </link>
     <gazebo reference="L_wheel">
-        <mu1>1.2</mu1>
-        <mu2>1.2</mu2>
-        <kp>500000.0</kp>
-        <kd>10.0</kd>
-        <minDepth>0.001</minDepth>
-        <maxVel>0.1</maxVel>
-        <material>Gazebo/FlatBlack</material>
+        <xacro:mat1/>
     </gazebo>
 
     <link name="R_wheel">
@@ -139,13 +127,7 @@
         </collision>
     </link>
     <gazebo reference="R_wheel">
-        <mu1>1.2</mu1>
-        <mu2>1.2</mu2>
-        <kp>500000.0</kp>
-        <kd>10.0</kd>
-        <minDepth>0.001</minDepth>
-        <maxVel>0.1</maxVel>
-        <material>Gazebo/FlatBlack</material>
+        <xacro:mat1/>
     </gazebo>
 
 
@@ -200,6 +182,7 @@
 
     <!-- arm -->
     <link name="Left_arm">
+
         <visual>
             <geometry>
                 <box size="${l_arm} ${L_arm} ${h_arm}"/>
@@ -216,7 +199,7 @@
         </inertial>
     </link>
 
-        <link name="Right_arm">
+    <link name="Right_arm">
         <visual>
             <geometry>
                 <box size="${l_arm} ${L_arm} ${h_arm}"/>
@@ -235,6 +218,7 @@
 
 
     <!-- Caster Wheel -->
+
     <link name="caster_wheel">
         <visual>
             <geometry>
@@ -251,7 +235,7 @@
             <inertia ixx="${2*free_m*free_r*free_r/5}" ixy="0.0" ixz="0.0" iyy="${2*free_m*free_r*free_r/5}" iyz="0.0" izz="${2*free_m*free_r*free_r/5}"/>
         </inertial>
     </link>
-    <gazebo reference="free_wheel">
+    <gazebo reference="caster_wheel">
         <xacro:mat2/>
     </gazebo>
     
@@ -275,32 +259,32 @@
     <joint name="body_cible_verte" type="fixed">
         <parent link="body"/>
         <child link="cible_verte"/>
-        <origin xyz="-0.15 0.1 0.005"/>
+        <origin xyz="-0.15 0.1 ${h_body/2}"/>
     </joint>
 
     <joint name="body_cible_rouge" type="fixed">
         <parent link="body"/>
         <child link="cible_rouge"/>
-        <origin xyz="-0.15 -0.1 0.005"/>
+        <origin xyz="-0.15 -0.1 ${h_body/2}"/>
     </joint>
 
     <joint name="body_L_arm" type="fixed">
-        <origin xyz="${l_body/2 + l_arm/2} ${L_body/2+0.05} 0.1" rpi="0 0 ${alpha_arm}"/>
+        <origin xyz="${l_body/2} ${L_body/2*cos(alpha_arm)} -0.09" rpy="0 0 ${alpha_arm}"/>
         <parent link="body"/>
         <child link="Left_arm"/>
     </joint>
 
     <joint name="body_R_arm" type="fixed">
-        <origin xyz="${l_body/2 + l_arm/2} -${L_body/2+0.05} 0.1" rpi="0 0 -${alpha_arm}"/>
+        <origin xyz="${l_body/2} -${L_body/2*cos(alpha_arm)} -0.09" rpy="0 0 -${alpha_arm}"/>
         <parent link="body"/>
         <child link="Right_arm"/>
     </joint>
 
 
     <joint name="base_casterWheel" type="fixed">
+        <origin xyz="-0.15 0 -${free_r + h_body/2}"/>
         <parent link="body"/>
         <child link="caster_wheel"/>
-        <origin xyz="-0.1 0 -${h_body/2 + free_r}"/>
     </joint>
 
     <gazebo>
