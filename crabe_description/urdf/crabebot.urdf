@@ -33,16 +33,16 @@
     <xacro:property name="m_wheel" value="${scale**3*.4}" />
 
     <!-- cibles -->
-    <xacro:property name="r_cible" value="${scale*0.05}" />
+    <xacro:property name="r_cible" value="${scale*0.03}" />
     <xacro:property name="h_cible" value="${scale*0.05}" />
     <xacro:property name="m_cible" value="${scale*0.01}" />
 
 
     <!-- arm -->
-    <xacro:property name="l_arm" value="${scale*0.3}" />
+    <xacro:property name="l_arm" value="${scale*0.5}" />
     <xacro:property name="L_arm" value="${scale*0.01}" />
     <xacro:property name="h_arm" value="${scale*0.08}" />
-    <xacro:property name="alpha_arm" value="${pi/4}" />
+    <xacro:property name="alpha_arm" value="${pi/6}" />
     <xacro:property name="m_arm" value="${scale**3*0.1}" />
     
 
@@ -265,13 +265,13 @@
     </joint>
 
     <joint name="body_L_arm" type="fixed">
-        <origin xyz="${l_body/2} ${L_body/2*cos(alpha_arm)} -${h_body/2+h_arm/2-0.01}" rpy="0 0 ${alpha_arm}"/>
+        <origin xyz="${cos(alpha_arm)*l_arm/2} ${sin(alpha_arm)*l_arm/2} -${h_body/2+h_arm/2}" rpy="0 0 ${alpha_arm}"/>
         <parent link="body"/>
         <child link="Left_arm"/>
     </joint>
 
     <joint name="body_R_arm" type="fixed">
-        <origin xyz="${l_body/2} -${L_body/2*cos(alpha_arm)} -${h_body/2+h_arm/2-0.01}" rpy="0 0 -${alpha_arm}"/>
+        <origin xyz="${cos(alpha_arm)*l_arm/2} -${sin(alpha_arm)*l_arm/2} -${h_body/2+h_arm/2}" rpy="0 0 -${alpha_arm}"/>
         <parent link="body"/>
         <child link="Right_arm"/>
     </joint>
