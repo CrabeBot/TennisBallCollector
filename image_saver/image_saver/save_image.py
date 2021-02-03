@@ -9,8 +9,6 @@ from rclpy.qos import qos_profile_sensor_data
 import rclpy
 from rclpy.node import Node
 
-from std_msgs.msg import String
-
 
 class saver(Node):
     def __init__(self):
@@ -20,10 +18,13 @@ class saver(Node):
 
     def im_callback(self, msg):
         bridge = cv_bridge.CvBridge()
-        cv_im = bridge.imgmsg_to_cv2(msg)
+        print("Got image")
+        print(msg.encoding)
+        cv_im = bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
+        print(cv_im.shape)
         print("affichage window")
         cv2.imshow("cv_im", cv_im)
-        cv2.imwrite("image.png", cv_im)
+        cv2.imwrite("/home/corentin/Documents/CrabeWS/src/TennisBallCollector/image_saver/image_ball_2.png", cv_im)
         cv2.waitKey()
         self.spin = False
         
