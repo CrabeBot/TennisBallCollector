@@ -33,13 +33,13 @@
     <xacro:property name="m_wheel" value="${scale**3*.4}" />
 
     <!-- cibles -->
-    <xacro:property name="r_cible" value="${scale*0.05}" />
+    <xacro:property name="r_cible" value="${scale*0.03}" />
     <xacro:property name="h_cible" value="${scale*0.05}" />
     <xacro:property name="m_cible" value="${scale*0.01}" />
 
 
     <!-- arm -->
-    <xacro:property name="l_arm" value="${scale*0.3}" />
+    <xacro:property name="l_arm" value="${scale*0.2}" />
     <xacro:property name="L_arm" value="${scale*0.01}" />
     <xacro:property name="h_arm" value="${scale*0.08}" />
     <xacro:property name="alpha_arm" value="${pi/4}" />
@@ -50,8 +50,17 @@
     <xacro:property name="r_free" value="${scale*0.05}" />
     <xacro:property name="m_free" value="${scale**3*1}" />
 
+    <!-- balles -->
+    <xacro:property name="d_balle" value="${0.07}" />
+    <xacro:property name="eps_balle" value="${0.01}" />
 
-
+    <!-- murs -->
+    <xacro:property name="e_murs" value="${scale*0.01}" />
+    <xacro:property name="h_murs" value="${scale*0.08}" />
+    <xacro:property name="l_murs" value="${l_body}" />
+    <xacro:property name="l_mur_f" value="${scale*(d_balle+2*eps_balle)+2*e_murs}" />
+    <xacro:property name="m_mur_long" value="${scale**3*0.1}" />
+    <xacro:property name="m_mur_f" value="${scale**3*0.01}" />
 
     <!-- Links-->
 
@@ -213,9 +222,65 @@
     </link>
 
 
-    <!-- Caster Wheel -->
 
-    <link name="caster_wheel">
+    <!-- reservoir -->
+    <link name="Left_mur">
+        <visual>
+            <geometry>
+                <box size="${l_murs} ${e_murs} ${h_murs}"/>
+            </geometry>
+        </visual>
+        <collision>
+            <geometry>
+                <box size="${l_murs} ${e_murs} ${h_murs}"/>
+            </geometry>
+        </collision>
+        <inertial>
+            <mass value="${m_mur_long}"/>
+            <inertia ixx="${m_mur_long*(h_murs*h_murs + e_murs*e_murs)/12}" ixy="0.0" ixz="0.0" iyy="${m_mur_long*(m_mur_long*m_mur_long+h_murs*h_murs)/12}" iyz="0.0" izz="${m_mur_long*(e_murs*e_murs+l_murs*l_murs)/12}"/>
+        </inertial>
+    </link>
+
+    <link name="Right_mur">
+        <visual>
+            <geometry>
+                <box size="${l_murs} ${e_murs} ${h_murs}"/>
+            </geometry>
+        </visual>
+        <collision>
+            <geometry>
+                <box size="${l_murs} ${e_murs} ${h_murs}"/>
+            </geometry>
+        </collision>
+        <inertial>
+            <mass value="${m_mur_long}"/>
+            <inertia ixx="${m_mur_long*(h_murs*h_murs + e_murs*e_murs)/12}" ixy="0.0" ixz="0.0" iyy="${m_mur_long*(m_mur_long*m_mur_long+h_murs*h_murs)/12}" iyz="0.0" izz="${m_mur_long*(e_murs*e_murs+l_murs*l_murs)/12}"/>
+        </inertial>
+    </link>
+
+    <link name="Mur_f">
+        <visual>
+            <geometry>
+                <box size="${l_mur_f} ${e_murs} ${h_murs}"/>
+            </geometry>
+        </visual>
+        <collision>
+            <geometry>
+                <box size="${l_mur_f} ${e_murs} ${h_murs}"/>
+            </geometry>
+        </collision>
+        <inertial>
+            <mass value="${m_mur_f}"/>
+            <inertia ixx="${m_mur_f*(h_murs*h_murs + e_murs*e_murs)/12}" ixy="0.0" ixz="0.0" iyy="${m_mur_f*(m_mur_f*m_mur_f+h_murs*h_murs)/12}" iyz="0.0" izz="${m_mur_f*(e_murs*e_murs+l_mur_f*l_mur_f)/12}"/>
+        </inertial>
+    </link>
+
+
+
+
+    <!-- Caster Wheels -->
+
+    <link name="caster_wheel_1">
         <visual>
             <geometry>
                     <sphere radius="${r_free}"/>
@@ -231,7 +296,28 @@
             <inertia ixx="${2*m_free*r_free**2/5}" ixy="0.0" ixz="0.0" iyy="${2*m_free*r_free**2/5}" iyz="0.0" izz="${2*m_free*r_free**2/5}"/>
         </inertial>
     </link>
-    <gazebo reference="caster_wheel">
+    <gazebo reference="caster_wheel_1">
+        <xacro:mat2/>
+    </gazebo>
+
+
+    <link name="caster_wheel_2">
+        <visual>
+            <geometry>
+                    <sphere radius="${r_free}"/>
+            </geometry>
+        </visual>
+        <collision>
+        <geometry>            
+            <sphere radius="${r_free}"/>
+            </geometry>
+        </collision>
+        <inertial>
+            <mass value="${m_free}"/>
+            <inertia ixx="${2*m_free*r_free**2/5}" ixy="0.0" ixz="0.0" iyy="${2*m_free*r_free**2/5}" iyz="0.0" izz="${2*m_free*r_free**2/5}"/>
+        </inertial>
+    </link>
+    <gazebo reference="caster_wheel_2">
         <xacro:mat2/>
     </gazebo>
     
@@ -265,22 +351,45 @@
     </joint>
 
     <joint name="body_L_arm" type="fixed">
-        <origin xyz="${l_body/2} ${L_body/2*cos(alpha_arm)} -${h_body/2+h_arm/2-0.01}" rpy="0 0 ${alpha_arm}"/>
+        <origin xyz="${cos(alpha_arm)*l_arm/2 + l_body/2} ${sin(alpha_arm)*l_arm/2 + l_mur_f/2 - e_murs/2} -${h_body/2+h_arm/2}" rpy="0 0 ${alpha_arm}"/>
         <parent link="body"/>
         <child link="Left_arm"/>
     </joint>
 
     <joint name="body_R_arm" type="fixed">
-        <origin xyz="${l_body/2} -${L_body/2*cos(alpha_arm)} -${h_body/2+h_arm/2-0.01}" rpy="0 0 -${alpha_arm}"/>
+        <origin xyz="${cos(alpha_arm)*l_arm/2 + l_body/2} -${sin(alpha_arm)*l_arm/2 + l_mur_f/2 - e_murs/2} -${h_body/2+h_arm/2}" rpy="0 0 -${alpha_arm}"/>
         <parent link="body"/>
         <child link="Right_arm"/>
     </joint>
 
-
-    <joint name="base_casterWheel" type="fixed">
-        <origin xyz="-${3*l_body/8} 0 -${r_free + h_body/2}"/>
+    <joint name="base_casterWheel_1" type="fixed">
+        <origin xyz="-${3*l_body/8} ${3*L_body/8} -${r_free + h_body/2}"/>
         <parent link="body"/>
-        <child link="caster_wheel"/>
+        <child link="caster_wheel_1"/>
+    </joint>
+
+    <joint name="base_casterWheel_2" type="fixed">
+        <origin xyz="-${3*l_body/8} -${3*L_body/8} -${r_free + h_body/2}"/>
+        <parent link="body"/>
+        <child link="caster_wheel_2"/>
+    </joint>
+
+    <joint name="body_L_mur" type="fixed">
+        <origin xyz="0 ${l_mur_f/2 - e_murs/2} -${h_body/2+h_murs/2}" rpy="0 0 0"/>
+        <parent link="body"/>
+        <child link="Left_mur"/>
+    </joint>
+
+    <joint name="body_R_mur" type="fixed">
+        <origin xyz="0 -${l_mur_f/2 - e_murs/2} -${h_body/2+h_murs/2}" rpy="0 0 0"/>
+        <parent link="body"/>
+        <child link="Right_mur"/>
+    </joint>
+
+    <joint name="body_mur_f" type="fixed">
+        <origin xyz="-${l_body/2 + e_murs/2} 0 -${h_body/2+h_murs/2}" rpy="0 0 ${pi/2}"/>
+        <parent link="body"/>
+        <child link="Mur_f"/>
     </joint>
 
     <gazebo>
