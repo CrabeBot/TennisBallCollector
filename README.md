@@ -21,15 +21,14 @@ OpenCV 4.2
 ## Groupe
 
 ### Membres
-Baumgard Colin
-Flechard Romane
-Hacene Hamid
-Lemoine Corentin
+- Romane FLECHARD
+- Corentin LEMOINE
+- Colin BAUMGARD
+- Hamid HACENE
 
 ### Gestion de projet
 
-###### A compléter avec le lien vers votre [Taiga](https://taiga.io).
-
+Lien vers le projet [Taiga](https://tree.taiga.io/project/hamidhacene-crabebot/timeline)
 
 
 ## Structure du dépôt
