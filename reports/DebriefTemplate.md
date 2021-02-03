@@ -1,31 +1,28 @@
-# Debrief du xx/xx/xxxx
+# Debrief du 27/01
 
-PO: ...
+PO: Corentin Lemoine
 
 
 ## Bilan
 
-Pourcentage de tâches réalisées: ... %
+Pourcentage de tâches réalisées: 50 %
 
 ### Ce qui a fonctionné
 
-###### A compléter.
+- Mise en place de l'architecture du projet, installation et vérification du bon fonctionnnement du package fourni pour tous les membres du groupe.
+- Description du robot (1ère version)
 
 
 ### Ce qui n'a pas fonctionné
+- Récupération de l'image via cvBridge
 
-###### A compléter.
 
 
 ### Retour d'expérience du PO
-
-###### A compléter.
+- Mise en place du projet, pourcentage de tâches réalisées relativement faible par rapport aux attentes de début de séance.
 
 
 ### Conseils pour le prochain PO
-
-###### A compléter.
-
 
 
 ## Nouvelles mesures
