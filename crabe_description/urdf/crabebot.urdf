@@ -13,26 +13,37 @@
     </xacro:macro>
 
     <!-- box -->
-    <xacro:property name="longueur" value="0.4" />
-    <xacro:property name="largeur" value="0.5" />
-    <xacro:property name="hauteur" value="0.2" />    
-    <xacro:property name="mbase" value="10.0" />
+    <xacro:property name="l_body" value="0.4" />
+    <xacro:property name="L_body" value="0.3" />
+    <xacro:property name="h_body" value="0.1" />    
+    <xacro:property name="m_body" value="10.0" />
     <xacro:property name="hauteur_chassis" value="1.5" />
     <xacro:property name="hauteur_benne" value="0.5" />
     <!-- roues -->
-    <xacro:property name="r" value="0.2" />
-    <xacro:property name="h" value="0.1" />
-    <xacro:property name="eps" value="0.05" />
-    <xacro:property name="mroue" value="1.0" />
+    <xacro:property name="r_wheel" value="0.1" />
+    <xacro:property name="h_wheel" value="0.05" />
+    <xacro:property name="eps_wheel" value="0.01" />
+    <xacro:property name="m_wheel" value="1.0" />
+
+    <!-- cibles -->
+    <xacro:property name="r_cible" value="0.05" />
+    <xacro:property name="h_cible" value="0.05" />
+    <xacro:property name="m_cible" value="0.01" />
+
+
     <!-- aileron -->
     <xacro:property name="l_aileron" value="0.2" />
     <xacro:property name="L_aileron" value="0.5" />
     <xacro:property name="h_aileron" value="0.05" />    
     <xacro:property name="m_aileron" value="0.5" />
-    <!-- cibles -->
-    <xacro:property name="r_cible" value="0.05" />
-    <xacro:property name="h_cible" value="0.05" />
-    <xacro:property name="m_cible" value="0.01" />
+
+    <!-- arm -->
+    <xacro:property name="l_arm" value="0.3" />
+    <xacro:property name="L_arm" value="0.01" />
+    <xacro:property name="h_arm" value="0.2" />
+    <xacro:property name="alpha_arm" value="${pi/6}" />
+    <xacro:property name="m_arm" value="0.1" />
+    
         
     <!-- Benne -->
     <xacro:property name="benne1X" value="0.1" />
@@ -47,115 +58,99 @@
 
     <!-- Free wheel -->
     <xacro:property name="free_r" value="0.05" />
-    <xacro:property name="free_m" value="0.1" />
+    <xacro:property name="free_m" value="1" />
 
 
 
 
     <!-- Links-->
-    <link name="base">
-        <visual>
-            <origin xyz="0 0 ${r/2+hauteur/2}" rpy="0 0 0"/>
-            <geometry>
-                <box size="${longueur} ${largeur} ${hauteur}"/>
-            </geometry>
-        </visual>
-        <inertial>
-            <origin xyz="0 0 ${r/2+hauteur/2}" rpy="0 0 0"/>
-            <mass value="${mbase}"/>
-            <inertia ixx="${mbase*(hauteur*hauteur+largeur*largeur)/12}" ixy="0.0" ixz="0.0" iyy="${mbase*(hauteur*hauteur+longueur*longueur)/12}" iyz="0.0" izz="${mbase*(largeur*largeur+longueur*longueur)/12}"/>
-        </inertial>
-        <collision>
-            <origin xyz="0 0 ${r/2+hauteur/2}" rpy="0 0 0"/>
-            <geometry>
-                <box size="${longueur} ${largeur} ${hauteur}"/>
-            </geometry>
-        </collision>
-    </link>
-        <gazebo reference="base">
-            <material>Gazebo/WhiteGlow</material>
-        </gazebo>
 
-    <link name="roue_gauche">
-        <visual>
-            <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
-            <geometry>
-                <cylinder radius="${r}" length="${h}"/>
-            </geometry>
-        </visual>
-        <inertial>
-            <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
-            <mass value="${mroue}"/>
-            <inertia ixx="${mroue*(3*r*r+h*h)/12}" ixy="0.0" ixz="0.0" iyy="${mroue*(3*r*r+h*h)/12}" iyz="0.0" izz="${mroue*r*r/2}"/>
-        </inertial>
-        <collision>
-            <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
-            <geometry>
-                <cylinder radius="${r}" length="${h}"/>
-            </geometry>
-        </collision>
-    </link>
-        <gazebo reference="roue_gauche">
-            <mu1>1.2</mu1>
-            <mu2>1.2</mu2>
-            <kp>500000.0</kp>
-            <kd>10.0</kd>
-            <minDepth>0.001</minDepth>
-            <maxVel>0.1</maxVel>
-            <material>Gazebo/FlatBlack</material>
-        </gazebo>
-
-    <link name="roue_droite">
-        <visual>
-            <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
-            <geometry>
-                <cylinder radius="${r}" length="${h}"/>
-            </geometry>
-        </visual>
-        <inertial>
-            <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
-            <mass value="${mroue}"/>
-            <inertia ixx="${mroue*(3*r*r+h*h)/12}" ixy="0.0" ixz="0.0" iyy="${mroue*(3*r*r+h*h)/12}" iyz="0.0" izz="${mroue*r*r/2}"/>
-        </inertial>
-        <collision>
-            <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
-            <geometry>
-                <cylinder radius="${r}" length="${h}"/>
-            </geometry>
-        </collision>
-    </link>
-        <gazebo reference="roue_droite">
-            <mu1>1.2</mu1>
-            <mu2>1.2</mu2>
-            <kp>500000.0</kp>
-            <kd>10.0</kd>
-            <minDepth>0.001</minDepth>
-            <maxVel>0.1</maxVel>
-            <material>Gazebo/FlatBlack</material>
-        </gazebo>
-
-    <link name="aileron">
+    <!-- body -->
+    <link name="body">
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0"/>
             <geometry>
-                <box size="${l_aileron} ${L_aileron} ${h_aileron}"/>
+                <box size="${l_body} ${L_body} ${h_body}"/>
             </geometry>
         </visual>
         <inertial>
-            <origin xyz="0 0 ${r/2+h_aileron/2}" rpy="0 0 0"/>
-            <mass value="${m_aileron}"/>
-            <inertia ixx="${m_aileron*(h_aileron*h_aileron+L_aileron*L_aileron)/12}" ixy="0.0" ixz="0.0" iyy="${m_aileron*(h_aileron*h_aileron+l_aileron*l_aileron)/12}" iyz="0.0" izz="${m_aileron*(L_aileron*L_aileron+l_aileron*l_aileron)/12}"/>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <mass value="${m_body}"/>
+            <inertia ixx="${m_body*(h_body*h_body+L_body*L_body)/12}" ixy="0.0" ixz="0.0" iyy="${m_body*(h_body*h_body+l_body*l_body)/12}" iyz="0.0" izz="${m_body*(L_body*L_body+l_body*l_body)/12}"/>
         </inertial>
         <collision>
-            <origin xyz="0 0 ${r/2+h_aileron/2}" rpy="0 0 0"/>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
             <geometry>
-                <box size="${l_aileron} ${L_aileron} ${h_aileron}"/>
+                <box size="${l_body} ${L_body} ${h_body}"/>
             </geometry>
         </collision>
     </link>
-    <gazebo reference="aileron">
+    <gazebo reference="body">
         <material>Gazebo/WhiteGlow</material>
     </gazebo>
+
+    <!-- Roues -->
+    <link name="L_wheel">
+        <visual>
+            <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
+            <geometry>
+                <cylinder radius="${r_wheel}" length="${h_wheel}"/>
+            </geometry>
+        </visual>
+        <inertial>
+            <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
+            <mass value="${m_wheel}"/>
+            <inertia ixx="${m_wheel*(3*r_wheel*r_wheel+h_wheel*h_wheel)/12}" ixy="0.0" ixz="0.0" iyy="${m_wheel*(3*r_wheel*r_wheel+h_wheel*h_wheel)/12}" iyz="0.0" izz="${m_wheel*r_wheel*r_wheel/2}"/>
+        </inertial>
+        <collision>
+            <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
+            <geometry>
+                <cylinder radius="${r_wheel}" length="${h_wheel}"/>
+            </geometry>
+        </collision>
+    </link>
+    <gazebo reference="L_wheel">
+        <mu1>1.2</mu1>
+        <mu2>1.2</mu2>
+        <kp>500000.0</kp>
+        <kd>10.0</kd>
+        <minDepth>0.001</minDepth>
+        <maxVel>0.1</maxVel>
+        <material>Gazebo/FlatBlack</material>
+    </gazebo>
+
+    <link name="R_wheel">
+        <visual>
+            <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
+            <geometry>
+                <cylinder radius="${r_wheel}" length="${h_wheel}"/>
+            </geometry>
+        </visual>
+        <inertial>
+            <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
+            <mass value="${m_wheel}"/>
+            <inertia ixx="${m_wheel*(3*r_wheel*r_wheel+h_wheel*h_wheel)/12}" ixy="0.0" ixz="0.0" iyy="${m_wheel*(3*r_wheel*r_wheel+h_wheel*h_wheel)/12}" iyz="0.0" izz="${m_wheel*r_wheel*r_wheel/2}"/>
+        </inertial>
+        <collision>
+            <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
+            <geometry>
+                <cylinder radius="${r_wheel}" length="${h_wheel}"/>
+            </geometry>
+        </collision>
+    </link>
+    <gazebo reference="R_wheel">
+        <mu1>1.2</mu1>
+        <mu2>1.2</mu2>
+        <kp>500000.0</kp>
+        <kd>10.0</kd>
+        <minDepth>0.001</minDepth>
+        <maxVel>0.1</maxVel>
+        <material>Gazebo/FlatBlack</material>
+    </gazebo>
+
+
+
+    <!-- Cibles -->
 
     <link name="cible_verte">
         <visual>
@@ -203,57 +198,43 @@
         <material>Gazebo/Red</material>
     </gazebo>
 
-    <link name="benne1">
+    <!-- arm -->
+    <link name="Left_arm">
         <visual>
             <geometry>
-                <box size="${benne1X} ${benne1Y} ${benne1Z}"/>
+                <box size="${l_arm} ${L_arm} ${h_arm}"/>
             </geometry>
         </visual>
         <collision>
             <geometry>
-                <box size="${benne1X} ${benne1Y} ${benne1Z}"/>
+                <box size="${l_arm} ${L_arm} ${h_arm}"/>
             </geometry>
         </collision>
         <inertial>
-            <mass value="${benne1_m}"/>
-            <inertia ixx="${benne1_m*(benne1Z*benne1Z + benne1Y*benne1Y)/12}" ixy="0.0" ixz="0.0" iyy="${benne1_m*(benne1X*benne1X+benne1Z*benne1Z)/12}" iyz="0.0" izz="${benne1_m*(benne1Y*benne1Y+benne1X*benne1X)/12}"/>
+            <mass value="${m_arm}"/>
+            <inertia ixx="${m_arm*(h_arm*h_arm + L_arm*L_arm)/12}" ixy="0.0" ixz="0.0" iyy="${m_arm*(m_arm*m_arm+h_arm*h_arm)/12}" iyz="0.0" izz="${m_arm*(L_arm*L_arm+l_arm*l_arm)/12}"/>
         </inertial>
     </link>
 
-    <link name="benne2">
+        <link name="Right_arm">
         <visual>
             <geometry>
-                <box size="${benne2X} ${benne2Y} ${benne2Z}"/>
+                <box size="${l_arm} ${L_arm} ${h_arm}"/>
             </geometry>
         </visual>
         <collision>
             <geometry>
-                <box size="${benne2X} ${benne2Y} ${benne2Z}"/>
+                <box size="${l_arm} ${L_arm} ${h_arm}"/>
             </geometry>
         </collision>
         <inertial>
-            <mass value="${benne2_m}"/>
-            <inertia ixx="${benne2_m*(benne2Z*benne2Z + benne2Y*benne2Y)/12}" ixy="0.0" ixz="0.0" iyy="${benne2_m*(benne2X*benne2X+benne2Z*benne2Z)/12}" iyz="0.0" izz="${benne2_m*(benne2Y*benne2Y+benne2X*benne2X)/12}"/>
+            <mass value="${m_arm}"/>
+            <inertia ixx="${m_arm*(h_arm*h_arm + L_arm*L_arm)/12}" ixy="0.0" ixz="0.0" iyy="${m_arm*(m_arm*m_arm+h_arm*h_arm)/12}" iyz="0.0" izz="${m_arm*(L_arm*L_arm+l_arm*l_arm)/12}"/>
         </inertial>
     </link>
 
-    <link name="benne3">
-        <visual>
-            <geometry>
-                <box size="${benne2X} ${benne2Y} ${benne2Z}"/>
-            </geometry>
-        </visual>
-        <collision>
-            <geometry>
-                <box size="${benne2X} ${benne2Y} ${benne2Z}"/>
-            </geometry>
-        </collision>
-        <inertial>
-            <mass value="${benne2_m}"/>
-            <inertia ixx="${benne2_m*(benne2Z*benne2Z + benne2Y*benne2Y)/12}" ixy="0.0" ixz="0.0" iyy="${benne2_m*(benne2X*benne2X+benne2Z*benne2Z)/12}" iyz="0.0" izz="${benne2_m*(benne2Y*benne2Y+benne2X*benne2X)/12}"/>
-        </inertial>
-    </link>
 
+    <!-- Caster Wheel -->
     <link name="caster_wheel">
         <visual>
             <geometry>
@@ -276,77 +257,67 @@
     
 
     <!-- Joints-->
-    <joint name="base_to_roue_gauche" type="continuous">
-        <parent link="base"/>
-        <child link="roue_gauche"/>
-        <origin xyz="0 ${largeur/2+eps+h/2} ${r}"/>
+    <joint name="Body_L_wheel" type="continuous">
+        <parent link="body"/>
+        <child link="L_wheel"/>
+        <origin xyz="0.1 ${L_body/2+eps_wheel} ${-h_body/2}"/>
         <axis xyz="0 1 0"/>
     </joint>
 
-    <joint name="base_to_roue_droite" type="continuous">
-        <parent link="base"/>
-        <child link="roue_droite"/>
-        <origin xyz="0 ${-(largeur/2+eps+h/2)} ${r}"/>
+    <joint name="Body_R_wheel" type="continuous">
+        <parent link="body"/>
+        <child link="R_wheel"/>
+        <origin xyz="0.1 -${L_body/2+eps_wheel} ${-h_body/2}"/>
         <axis xyz="0 1 0"/>
     </joint>
 
-    <joint name="base_to_aileron" type="fixed">
-        <parent link="base"/>
-        <child link="aileron"/>
-        <origin xyz="${-(longueur/2+l_aileron/2)} 0 ${r-hauteur/2+h_aileron/2}"/>
-    </joint>
 
-    <joint name="base_to_cible_verte" type="fixed">
-        <parent link="base"/>
+    <joint name="body_cible_verte" type="fixed">
+        <parent link="body"/>
         <child link="cible_verte"/>
-        <origin xyz="${-longueur/2-l_aileron/2} ${0.1-largeur/2} ${r-hauteur/2+h_aileron+h_cible/2}"/>
+        <origin xyz="-0.15 0.1 0.005"/>
     </joint>
 
-    <joint name="base_to_cible_rouge" type="fixed">
-        <parent link="base"/>
+    <joint name="body_cible_rouge" type="fixed">
+        <parent link="body"/>
         <child link="cible_rouge"/>
-        <origin xyz="${-longueur/2-l_aileron/2} ${-(0.1-largeur/2)} ${r-hauteur/2+h_aileron+h_cible/2}"/>
+        <origin xyz="-0.15 -0.1 0.005"/>
     </joint>
 
-    <joint name="benne_1_2" type="fixed">
-        <origin xyz="${benne1X/2+benne2X/2} ${benne1Y/2-benne2Y/2} 0" rpi="0 0 0"/>
-        <parent link="benne1"/>
-        <child link="benne2"/>
+    <joint name="body_L_arm" type="fixed">
+        <origin xyz="${l_body/2 + l_arm/2} ${L_body/2+0.05} 0.1" rpi="0 0 ${alpha_arm}"/>
+        <parent link="body"/>
+        <child link="Left_arm"/>
     </joint>
 
-    <joint name="benne_1_3" type="fixed">
-        <origin xyz="${benne1X/2+benne2X/2} ${-benne1Y/2+benne2Y/2} 0" rpi="0 0 0"/>
-        <parent link="benne1"/>
-        <child link="benne3"/>
+    <joint name="body_R_arm" type="fixed">
+        <origin xyz="${l_body/2 + l_arm/2} -${L_body/2+0.05} 0.1" rpi="0 0 -${alpha_arm}"/>
+        <parent link="body"/>
+        <child link="Right_arm"/>
     </joint>
 
-    <joint name="benne_free_wheel" type="fixed">
-        <origin xyz="0 0 ${-free_r/2-benne1Z/2}" rpi="0 0 0"/>
-        <parent link="benne1"/>
+
+    <joint name="base_casterWheel" type="fixed">
+        <parent link="body"/>
         <child link="caster_wheel"/>
-    </joint>
-
-    <joint name="base_to_benne1" type="fixed">
-        <parent link="base"/>
-        <child link="benne1"/>
-        <origin xyz="${(longueur/2+benne1X/2)+0.1} 0 ${r}"/>
+        <origin xyz="-0.1 0 -${h_body/2 + free_r}"/>
     </joint>
 
     <gazebo>
         <plugin name="joint_states" filename="libgazebo_ros_joint_state_publisher.so">
-            <joint_name>base_to_roue_droite</joint_name>
-            <joint_name>base_to_roue_gauche</joint_name>
+            <joint_name>Body_R_wheel</joint_name>
+            <joint_name>Body_L_wheel</joint_name>
         </plugin>
         
         <plugin name='diff_drive' filename='libgazebo_ros_diff_drive.so'>
             <update_rate>500</update_rate>
             <!-- wheels -->
-            <left_joint>base_to_roue_gauche</left_joint>
-            <right_joint>base_to_roue_droite</right_joint>
+            <left_joint>Body_L_wheel</left_joint>
+            <right_joint>Body_R_wheel</right_joint>
 
             <!-- kinematics -->
-            <wheel_separation>${largeur+2*eps+h}</wheel_separation>
-            <wheel_diameter>${2*r}</wheel_diameter>
+            <wheel_separation>${L_body+2*eps_wheel+h_wheel}</wheel_separation>
+            <wheel_diameter>${2*r_wheel}</wheel_diameter>
 
             <!-- limits -->
             <max_wheel_torque>20</max_wheel_torque>
@@ -357,7 +328,7 @@
             <publish_odom_tf>true</publish_odom_tf>
             <publish_wheel_tf>true</publish_wheel_tf>
             <odometry_frame>odom</odometry_frame>
-            <robot_base_frame>base</robot_base_frame>
+            <robot_base_frame>body</robot_base_frame>
         </plugin>
     </gazebo>
 
