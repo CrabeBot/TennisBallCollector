@@ -10,19 +10,16 @@ import rclpy.qos as qos
 class saver(Node):
     def __init__(self):
         super().__init__("saver")
-<<<<<<< HEAD
         self.profile1 = qos.QoSProfile(reliability=qos.QoSReliabilityPolicy.BEST_EFFORT, history=qos.QoSHistoryPolicy.KEEP_LAST, depth=5)
         self.im_subscriber = self.create_subscription(Image, "/zenith_camera/image_raw", self.im_callback, qos_profile=self.profile1)
         self.profile2 = qos.QoSProfile()
         self.str_subscriber = self.create_subscription(Int32, "/cmd", self.str_callback, 10)
         self.cmd = 0
-=======
         self.profile = qos.QoSPresetProfiles.get_from_short_key('SENSOR_DATA')
         print(type(self.profile))
         self.im_subscriber = self.create_subscription(Image, "/zenith_camera/image_raw", self.im_callback, qos_profile=self.profile)
         self.str_subscriber = self.create_subscription(Int32, "/cmd", self.str_callback, qos_profile=self.profile)
         self.cmd = 1
->>>>>>> 37ccc6655ee985c058a1f56a75deb6185354bce3
         self.spin = True
 
     def str_callback(self, msg):
