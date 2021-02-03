@@ -15,22 +15,19 @@ from geometry_msgs.msg import Quaternion
 import cv2
 import cv_bridge
 
+from tf2_msgs.msg import TFMessage
+
 class localizer(Node):
     def __init__(self):
         super().__init__("saver")
         self.profile = qos_profile_sensor_data
         self.im_subscriber = self.create_subscription(Image, "/zenith_camera/image_raw", self.im_callback, qos_profile=self.profile)
 
-        self.map2odomTF = geometry_msgs.msg.TransformStamped()
+        self.br = tf2_ros.TransformBroadcaster(self)
+        #self.tf_publisher = self.create_publisher(msg_type=TFMessage, topic="/tf", qos_profile=self.profile)
         
-        self.map2odomTF.header.stamp = self.get_clock().now().to_msg()
-        self.map2odomTF.header.frame_id = "map"
-        self.map2odomTF.child_frame_id = "odom"
-        self.map2odomTF.transform.translation.x = 0.0
-        self.map2odomTF.transform.translation.y = 0.0
-        self.map2odomTF.transform.translation.z = 0.0
-        q = self.rpy2Quaternion(0, 0, 0)
-        self.map2odomTF.transform.rotation = q
+
+
     
     
 
@@ -52,14 +49,17 @@ class localizer(Node):
 
         return q
 
+    def imgCoordToTF(self, ix, iy):
+        return (
+            -0.02392*ix + 8.56684846, 
+            (iy-639.98)/(-41.842)
+            )
 
     def im_callback(self, msg):
         bridge = cv_bridge.CvBridge()
-        print("Got image")
-        print(msg.encoding)
         cv_im = bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
 
-        im_hsv = cv2.cvtColor(cv_im, 'BGR2HSV')
+        im_hsv = cv2.cvtColor(cv_im, cv2.COLOR_BGR2HSV)
         lh = 44
         hh = 99
         ls = 113
@@ -69,54 +69,58 @@ class localizer(Node):
         green_im = cv2.inRange(im_hsv, (lh, ls, lv), (hh, hs, hv))
         red_im = cv2.inRange(im_hsv, (0, ls, lv), (12, hs, hv))
         
-        green_circles = cv2.HoughCircles(green_im, cv2.HOUGH_GRADIENT, 1, 10,
-                               param1=5, param2=30,
-                               minRadius=1, maxRadius=30)
-        red_circles = cv2.HoughCircles(red_im, cv2.HOUGH_GRADIENT, 1, 10,
-                               param1=5, param2=30,
-                               minRadius=1, maxRadius=30)
-    
-    
-        if red_circles is not None:
-            circles = np.uint16(np.around(red_circles))
-            for i in circles[0, :]:
-                center = (i[0], i[1])
-                # circle center
-                cv2.circle(cv_im, center, 1, (0, 100, 100), 3)
-                # circle outline
-                radius = i[2]
-                cv2.circle(cv_im, center, radius, (255, 0, 255), 3)
-        if green_circles is not None:
-                    circles = np.uint16(np.around(green_circles))
-                    for i in circles[0, :]:
-                        center = (i[0], i[1])
-                        # circle center
-                        cv2.circle(cv_im, center, 1, (0, 100, 100), 3)
-                        # circle outline
-                        radius = i[2]
-                        cv2.circle(cv_im, center, radius, (255, 0, 255), 3)
-        print(cv_im.shape)
-        print("affichage window")
+        gcX, gcY, rcX, rcY = 0,0,0,0
+        green_cnts, hierarchy = cv2.findContours(green_im, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        for c in green_cnts:
+            # compute the center of the contour
+            M = cv2.moments(c)
+            gcX = int(M["m10"] / M["m00"])
+            gcY = int(M["m01"] / M["m00"])
+            # draw the contour and center of the shape on the image
+            cv2.circle(cv_im, (gcX, gcY), 2, (255, 255, 0), -1)
+
+        red_cnts, hierarchy = cv2.findContours(red_im, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        for c in red_cnts:
+            # compute the center of the contour
+            M = cv2.moments(c)
+            rcX = int(M["m10"] / M["m00"])
+            rcY = int(M["m01"] / M["m00"])
+            # draw the contour and center of the shape on the image
+            cv2.circle(cv_im, (rcX, rcY), 2, (255, 0, 0), -1)
+        #we suppose we found it
+
+        robotx = (rcX + gcX) / 2
+        roboty = (rcY + gcY) / 2
+        robotTheta = np.arctan2(rcX-gcX, rcY - gcY) - np.pi/2
+        cv2.circle(cv_im, (int(robotx), int(roboty)), 5, (255, 0, 255), -1)
+        cv2.arrowedLine(
+            cv_im, 
+            (int(robotx), 
+            int(roboty)), 
+            (int(robotx) - int(20*np.sin(robotTheta)), int(roboty) - int(20*np.cos(robotTheta))),
+            (0,0,0)
+        )
+
         cv2.imshow("cv_im", cv_im)
         cv2.waitKey(1)
 
-        robotx, roboty, robotTheta = 0,0,0
-        
-        br = tf2_ros.TransformBroadcaster()
+        rx, ry = self.imgCoordToTF(roboty, robotx)
+
         t = geometry_msgs.msg.TransformStamped()
         
-        t.header.stamp = rclpy.Time.now()
+        t.header.stamp = self.get_clock().now().to_msg()
         t.header.frame_id = "odom"
         t.child_frame_id = "base_link"
-        t.transform.translation.x = robotx
-        t.transform.translation.y = roboty
+        t.transform.translation.x = rx
+        t.transform.translation.y = ry
         t.transform.translation.z = 0.0
         q = self.rpy2Quaternion(0, 0, robotTheta)
         t.transform.rotation = q
-    
-        self.map2odomTF.header.stamp = self.get_clock().now().to_msg()
-        br.sendTransform(self.map2odomTF)
-        br.sendTransform(t)
+
+        #tf_msg = TFMessage()
+        #tf_msg.transforms = [t]
+        #self.tf_publisher.publish(tf_msg)
+        self.br.sendTransform(t)
         
 
 def main(args=None):

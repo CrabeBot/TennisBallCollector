@@ -44,7 +44,7 @@ def generate_launch_description():
         package="robot_state_publisher",
         executable='robot_state_publisher',
         #parameters=[{'robot_description': LaunchConfiguration('robot_desc')}]
-        parameters=[{'robot_description': Command(['xacro ', LaunchConfiguration('robot_desc')])}]
+        parameters=[{'robot_description': Command(['xacro ', LaunchConfiguration('robot_desc')])}],
     )
 
     rqt_robot_steering_node = Node(
