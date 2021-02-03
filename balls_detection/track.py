@@ -25,18 +25,16 @@ def detectBalls(img):
                                         param1=100, # Upper threshold for the internal Canny edge detector
                                         param2=5, # Threshold for center detection
                                         minRadius=5,
-                                        maxRadius=20
+                                        maxRadius=30
                                         )
     ballsCoords = []
     if detected_circles is not None :
         detected_circles = np.uint16(np.around(detected_circles))
         print("Nombre de balles trouvés : ", detected_circles.shape[1])
-        i = 0
         for pt in detected_circles[0,:]:
             x,y,r = pt[0], pt[1], pt[2]
             c = [x,y]
             ballsCoords.append(c)
-            i += 1
             # draw the outer circle
             cv2.circle(img, (x,y), r, (0,255,0), 2)
             # draw the center of the circle
@@ -46,27 +44,49 @@ def detectBalls(img):
     
     return np.float32(np.asarray(ballsCoords))
 
+def detectBalls2(img):
+    mask = buildMask(img)
+    cnts, hierarchy = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    ballsCoords = []
+    if len(cnts) > 0:
+        for cnt in cnts:
+            ((x, y), r) = cv2.minEnclosingCircle(cnt)
+            M = cv2.moments(cnt)
+            cx = int(M["m10"] / M["m00"]) 
+            cy = int(M["m01"] / M["m00"])
+            c = [cx,cy]
+            ballsCoords.append(c)
+            # draw the outer circle
+            cv2.circle(img, (cx,cy), int(r), (0,255,0), 2)
+            # draw the center of the circle
+            cv2.circle(img, (cx,cy), 2, (0,0,255), 3)
+        print("Nombre de balles trouvés : ", len(ballsCoords))
+    else:
+        print("No circle found")
+    return np.float32(np.asarray(ballsCoords))
+
 #-------------------------------------------------------------------------------------
 old_frame = cv2.imread("./video/image_ball_0.png")
 old_gray = buildMask(old_frame)
-coords0 = detectBalls(old_frame)
+coords0 = detectBalls2(old_frame)
 #print("coords0 : ", coords0)
 
 cv2.namedWindow("tracking")
+#cv2.namedWindow("mask")
 waitTime = 20
 
 # Parameters for lucas kanade optical flow
 lk_params = dict( winSize  = (15,15),
-                  maxLevel = 2,
+                  maxLevel = 10,
                   criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
 # Create some random colors
 color = np.random.randint(0,255,(100,3))
 # Create a mask image for drawing purposes
-mask = np.zeros_like(old_frame)
+traj = np.zeros_like(old_frame)
 
 i = 0
 while(i<100):
-    #print(i)
+    print(i)
     frame = cv2.imread("./video/image_ball_{0}.png".format(str(i)))
     
     # calculate optical flow    
@@ -85,51 +105,59 @@ while(i<100):
     for j,(new,old) in enumerate(zip(good_new, good_old)):
         a,b = new.ravel()
         c,d = old.ravel()
-        mask = cv2.line(mask, (a,b), (c,d), color[i].tolist(), 2)
-        frame = cv2.circle(frame, (a,b), 5, color[i].tolist(), -1)
+        traj = cv2.line(traj, (a,b), (c,d), (74,74,74), 2)
+        frame = cv2.circle(frame, (a,b), 5, (0,200,0), -1)
         frame = cv2.putText(frame, str(j), (int(a)+20,int(b)+20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,0,0), 2)
 
-    img = cv2.add(frame, mask)
+    img = cv2.add(frame, traj)
 
     cv2.imshow("tracking", img)
+    #cv2.imshow("mask", frame_gray)
     # Wait longer to prevent freeze for videos.
     if cv2.waitKey(waitTime) & 0xFF == ord('q'):
         break
 
-    # Now update the previous frame and previous points
     old_gray = frame_gray.copy()
     coords0 = good_new.reshape(-1,1,2)
+#new try    
+    newcoords = detectBalls2(frame)
+    # print("newcoords", newcoords.shape)
+    # print("coords0", coords0.shape)
+    print("=======================================")
+    if (newcoords.shape[0]>coords0.shape[0]):
+        distance = distance_matrix(coords0.reshape((-1,2)), newcoords)
+        #matched =  np.empty((newcoords.shape[0],1,2))
+        matched = []
+        # print("distance\n", distance)
+        # print("newcoords\n", newcoords)
+        # print("coords0\n", coords0)
+        # print("newcoords : ", newcoords.shape)
+        # print("coords0 : ", coords0.shape)
+        for k in range(coords0.shape[0]):
+            #matched[k,0] = newcoords[np.argmin(distance[k,:])]
+            matched.append(newcoords[np.argmin(distance[k,:])])
+        for k in range(newcoords.shape[0]):
+            if (np.min(distance[:,k])>100):
+                matched.append(newcoords[k])
+        coords0 = np.asarray(matched).reshape((newcoords.shape[0],1,2))
+        #coords0 = matched
+        #print("matched", coords0.shape)
+
+    i +=1
+
+cv2.waitKey(0)
+cv2.destroyAllWindows()
+
+
+# Works but don't keeps the balls sorted
+    # Now update the previous frame and previous points
+"""
     # check for new ball
     newcoords = detectBalls(frame)
     print("newcoords", newcoords.shape)
     print("coords0", coords0.shape)
     print("=======================================")
     if (newcoords.shape[0]>coords0.shape[0]):
-        # for i in range(newcoords.shape[0]):
-        #     x = newcoords[i,0]
-        #     ind = np.where(coords0==x)
-
-
         coords0 = newcoords.reshape((newcoords.shape[0],1,2))
-    i +=1
-
-cv2.destroyAllWindows()
-
-
-    # newcoords = detectBalls(frame)
-    # print("newcoords", newcoords.shape)
-    # print("coords0", coords0.shape)
-    # print("=======================================")
-    # if (newcoords.shape[0]>coords0.shape[0]):
-    #     # for i in range(newcoords.shape[0]):
-    #     #     x = newcoords[i,0]
-    #     #     ind = np.where(coords0==x)
-    #     distance = distance_matrix(coords0.reshape((-1,2)), newcoords)
-    #     matched =  np.empty((newcoords.shape[0],1,2))
-    #     print("distance", distance.shape)
-    #     print("newcoords", newcoords.shape)
-    #     for k in range(newcoords.shape[0]):
-    #         matched[k,0] = newcoords[np.argmin(distance[k,:])]
-
-    #     coords0 = matched
-    #     print("matched", coords0.shape)
+"""
+#=================================================================

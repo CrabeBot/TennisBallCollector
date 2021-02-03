@@ -41,7 +41,7 @@ cv2.setTrackbarPos('mx', 'image', 11)
 dp = md = p1 = p2 = mr = mx = 0
 
 
-img = cv2.imread("./balls/image_ball_72.png")
+img = cv2.imread("./video/image_ball_88.png")
 gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 gray = cv2.medianBlur(gray, 5)
 # bgr --> hsv
