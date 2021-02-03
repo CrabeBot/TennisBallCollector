@@ -8,7 +8,7 @@ Ceci est un template de dépôt Git pour le cours d'ingénierie système et mod�
 ### Dépendances
 ros-foxy-navigation2 ros-foxy-nav2-bringup
 OpenCV 4.2
-
+tf_conversions (python3-tf-conversions aptitude package)
 
 ### Démarrer la simulation
 
