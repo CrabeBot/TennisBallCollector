@@ -21,7 +21,6 @@ OpenCV 4.2
 ## Groupe
 
 ### Membres
-
 - Romane FLECHARD
 - Corentin LEMOINE
 - Colin BAUMGARD
