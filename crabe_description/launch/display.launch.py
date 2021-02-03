@@ -26,17 +26,19 @@ def generate_launch_description():
         DeclareLaunchArgument(name='rviz_config', default_value=default_rviz_config_path, description='Absolute path to rviz config file')
         ])
 
+    """
     # A l'intérieur de cette fonction, on crée les noeuds, avec pour chaque noeud le minimum vital,
     # càd : le nom du package et le nom de l'exécutable.
     # Il est possible d'ajouter + de customisation aux nodes si besoin.
     gazebo_node = IncludeLaunchDescription(
                 PythonLaunchDescriptionSource([pkg_share_gazebo_ros, '/launch/gazebo.launch.py']),
              )
+    """
 
     # GAZEBO_MODEL_PATH has to be correctly set for Gazebo to be able to find the model
     gazebo_spawn_entity_node = Node(package='gazebo_ros', 
                         executable='spawn_entity.py',
-                        arguments=['-entity', 'crabebot', '-topic', '/robot_description', '-y', '4'],
+                        arguments=['-entity', 'crabebot', '-topic', '/robot_description', '-y', '10'],
                         output='screen')
 
 
@@ -63,7 +65,10 @@ def generate_launch_description():
 
     # On ajoute tous les noeuds créés à la LaunchDescription
     # Sans cet ajout, les noeuds ne seront pas lancés.
-    ld.add_action(gazebo_node)
+    #ld.add_action(gazebo_node)
+    # On ne lance pas le gazebo Node ici puisqu'il est déjà lancé avec le tennis court
+    # En revanche, on lance le gazebo_spawn_entity node qui permet de charger notre robot directement sur le tennis court
+    # ouvert auparavant dans gazebo
     ld.add_action(gazebo_spawn_entity_node)
     ld.add_action(robot_state_publisher_node)
     ld.add_action(rqt_robot_steering_node)
