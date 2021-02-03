@@ -1,0 +1,122 @@
+<?xml version="1.0"?>
+
+
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="crabe">
+
+    <xacro:macro name="mat2">
+        <mu1>0.15</mu1>
+        <mu2>0.15</mu2>
+        <kp>500000.0</kp>
+        <kd>10.0</kd>
+        <minDepth>0.001</minDepth>
+        <maxVel>0.1</maxVel>
+        <material>Gazebo/FlatBlack</material>
+    </xacro:macro>
+
+    
+    <!-- Benne -->
+    <xacro:property name="benne1X" value="0.1" />
+    <xacro:property name="benne1Y" value="0.6" />
+    <xacro:property name="benne1Z" value="0.2" />
+    <xacro:property name="benne1_m" value="0.1" />
+
+
+    <xacro:property name="benne2X" value="0.5" />
+    <xacro:property name="benne2Y" value="0.1" />
+    <xacro:property name="benne2Z" value="${benne1Z}" />
+    <xacro:property name="benne2_m" value="0.1" />
+
+    <xacro:property name="free_r" value="0.1" />
+    <xacro:property name="free_m" value="0.05" />
+
+    <link name="benne1">
+        <visual>
+            <geometry>
+                <box size="${benne1X} ${benne1Y} ${benne1Z}"/>
+            </geometry>
+        </visual>
+        <collision>
+            <geometry>
+                <box size="${benne1X} ${benne1Y} ${benne1Z}"/>
+            </geometry>
+        </collision>
+        <inertial>
+            <mass value="${benne1_m}"/>
+            <inertia ixx="${benne1_m*(benne1Z*benne1Z + benne1Y*benne1Y)/12}" ixy="0.0" ixz="0.0" iyy="${benne1_m*(benne1X*benne1X+benne1Z*benne1Z)/12}" iyz="0.0" izz="${benne1_m*(benne1Y*benne1Y+benne1X*benne1X)/12}"/>
+        </inertial>
+    </link>
+
+    <link name="benne2">
+        <visual>
+            <geometry>
+                <box size="${benne2X} ${benne2Y} ${benne2Z}"/>
+            </geometry>
+        </visual>
+        <collision>
+            <geometry>
+                <box size="${benne2X} ${benne2Y} ${benne2Z}"/>
+            </geometry>
+        </collision>
+        <inertial>
+            <mass value="${benne2_m}"/>
+            <inertia ixx="${benne2_m*(benne2Z*benne2Z + benne2Y*benne2Y)/12}" ixy="0.0" ixz="0.0" iyy="${benne2_m*(benne2X*benne2X+benne2Z*benne2Z)/12}" iyz="0.0" izz="${benne2_m*(benne2Y*benne2Y+benne2X*benne2X)/12}"/>
+        </inertial>
+    </link>
+
+    <link name="benne3">
+        <visual>
+            <geometry>
+                <box size="${benne2X} ${benne2Y} ${benne2Z}"/>
+            </geometry>
+        </visual>
+        <collision>
+            <geometry>
+                <box size="${benne2X} ${benne2Y} ${benne2Z}"/>
+            </geometry>
+        </collision>
+        <inertial>
+            <mass value="${benne2_m}"/>
+            <inertia ixx="${benne2_m*(benne2Z*benne2Z + benne2Y*benne2Y)/12}" ixy="0.0" ixz="0.0" iyy="${benne2_m*(benne2X*benne2X+benne2Z*benne2Z)/12}" iyz="0.0" izz="${benne2_m*(benne2Y*benne2Y+benne2X*benne2X)/12}"/>
+        </inertial>
+    </link>
+
+    <link name="caster_wheel">
+        <visual>
+            <geometry>
+                    <sphere radius="${free_r}"/>
+            </geometry>
+        </visual>
+        <collision>
+        <geometry>            
+            <sphere radius="${free_r}"/>
+            </geometry>
+        </collision>
+        <inertial>
+            <mass value="${free_m}"/>
+            <inertia ixx="${2*free_m*free_r*free_r/5}" ixy="0.0" ixz="0.0" iyy="${2*free_m*free_r*free_r/5}" iyz="0.0" izz="${2*free_m*free_r*free_r/5}"/>
+        </inertial>
+    </link>
+    <gazebo reference="free_wheel">
+        <xacro:mat2/>
+    </gazebo>
+
+    <joint name="benne_1_2" type="fixed">
+        <origin xyz="${benne1X/2+benne2X/2} ${benne1Y/2-benne2Y/2} 0" rpi="0 0 0"/>
+        <parent link="benne1"/>
+        <child link="benne2"/>
+    </joint>
+
+    <joint name="benne_1_3" type="fixed">
+        <origin xyz="${benne1X/2+benne2X/2} ${-benne1Y/2+benne2Y/2} 0" rpi="0 0 0"/>
+        <parent link="benne1"/>
+        <child link="benne3"/>
+    </joint>
+
+    <joint name="benne_free_wheel" type="fixed">
+        <origin xyz="0 0 ${-free_r/2-benne1Z/2}" rpi="0 0 0"/>
+        <parent link="benne1"/>
+        <child link="caster_wheel"/>
+    </joint>
+
+
+</robot>
