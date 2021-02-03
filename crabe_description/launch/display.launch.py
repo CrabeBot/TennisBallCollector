@@ -36,7 +36,7 @@ def generate_launch_description():
     # GAZEBO_MODEL_PATH has to be correctly set for Gazebo to be able to find the model
     gazebo_spawn_entity_node = Node(package='gazebo_ros', 
                         executable='spawn_entity.py',
-                        arguments=['-entity', 'crabebot', '-topic', '/robot_description'],
+                        arguments=['-entity', 'crabebot', '-topic', '/robot_description', '-y', '4'],
                         output='screen')
 
 

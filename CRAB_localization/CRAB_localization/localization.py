@@ -58,11 +58,47 @@ class localizer(Node):
         print("Got image")
         print(msg.encoding)
         cv_im = bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
+
+        im_hsv = cv2.cvtColor(cv_im, 'BGR2HSV')
+        lh = 44
+        hh = 99
+        ls = 113
+        hs = 255
+        lv = 76
+        hv = 255
+        green_im = cv2.inRange(im_hsv, (lh, ls, lv), (hh, hs, hv))
+        red_im = cv2.inRange(im_hsv, (0, ls, lv), (12, hs, hv))
+        
+        green_circles = cv2.HoughCircles(green_im, cv2.HOUGH_GRADIENT, 1, 10,
+                               param1=5, param2=30,
+                               minRadius=1, maxRadius=30)
+        red_circles = cv2.HoughCircles(red_im, cv2.HOUGH_GRADIENT, 1, 10,
+                               param1=5, param2=30,
+                               minRadius=1, maxRadius=30)
+    
+    
+        if red_circles is not None:
+            circles = np.uint16(np.around(red_circles))
+            for i in circles[0, :]:
+                center = (i[0], i[1])
+                # circle center
+                cv2.circle(cv_im, center, 1, (0, 100, 100), 3)
+                # circle outline
+                radius = i[2]
+                cv2.circle(cv_im, center, radius, (255, 0, 255), 3)
+        if green_circles is not None:
+                    circles = np.uint16(np.around(green_circles))
+                    for i in circles[0, :]:
+                        center = (i[0], i[1])
+                        # circle center
+                        cv2.circle(cv_im, center, 1, (0, 100, 100), 3)
+                        # circle outline
+                        radius = i[2]
+                        cv2.circle(cv_im, center, radius, (255, 0, 255), 3)
         print(cv_im.shape)
         print("affichage window")
         cv2.imshow("cv_im", cv_im)
-        cv2.imwrite("/home/corentin/Documents/CrabeWS/src/TennisBallCollector/image_saver/image_ball_2.png", cv_im)
-        cv2.waitKey()
+        cv2.waitKey(1)
 
         robotx, roboty, robotTheta = 0,0,0
         

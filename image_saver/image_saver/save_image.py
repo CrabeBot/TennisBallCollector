@@ -15,25 +15,27 @@ class saver(Node):
         super().__init__("saver")
         self.profile = qos_profile_sensor_data
         self.im_subscriber = self.create_subscription(Image, "/zenith_camera/image_raw", self.im_callback, qos_profile=self.profile)
+        self.img = 0
 
     def im_callback(self, msg):
-        bridge = cv_bridge.CvBridge()
-        print("Got image")
-        print(msg.encoding)
-        cv_im = bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
-        print(cv_im.shape)
-        print("affichage window")
-        cv2.imshow("cv_im", cv_im)
-        cv2.imwrite("/home/corentin/Documents/CrabeWS/src/TennisBallCollector/image_saver/image_ball_2.png", cv_im)
-        cv2.waitKey()
-        self.spin = False
-        
+        if self.img <= 100:
+            bridge = cv_bridge.CvBridge()
+            print("Got image")
+            print(msg.encoding)
+            cv_im = bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
+            print(cv_im.shape)
+            print("affichage window")
+            #cv2.imshow("cv_im", cv_im)
+            cv2.imwrite("/home/corentin/Documents/CrabeWS/src/TennisBallCollector/image_saver/video/image_ball_{0}.png".format(str(self.img)), cv_im)
+            #cv2.waitKey()
+            self.img += 1
+            
 
 def main(args=None):
     rclpy.init(args=args)
     node = saver()
     
-    rclpy.spin_once(node)
+    rclpy.spin(node)
 
     # Destroy the node explicitly
     # (optional - otherwise it will be done automatically
