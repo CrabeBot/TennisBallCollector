@@ -22,13 +22,14 @@ OpenCV 4.2
 
 ### Membres
 
-###### A compléter avec les membres du groupe.
-
+- Romane FLECHARD
+- Corentin LEMOINE
+- Colin BAUMGARD
+- Hamid HACENE
 
 ### Gestion de projet
 
-###### A compléter avec le lien vers votre [Taiga](https://taiga.io).
-
+Lien vers le projet [Taiga](https://tree.taiga.io/project/hamidhacene-crabebot/timeline)
 
 
 ## Structure du dépôt
