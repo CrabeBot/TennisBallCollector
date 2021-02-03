@@ -1,30 +1,50 @@
-# Debrief du 27/01
+# Debrief du 03/02
 
-PO: Corentin Lemoine
+PO: Hamid Hacene
 
 
 ## Bilan
 
-Pourcentage de tâches réalisées: 50 %
+Pourcentage de tâches réalisées: 80 %
+
 
 ### Ce qui a fonctionné
 
-- Mise en place de l'architecture du projet, installation et vérification du bon fonctionnnement du package fourni pour tous les membres du groupe.
-- Description du robot (1ère version)
+- Création d'un projet Taiga
+
+- Design de la partie mécanique du robot : 
+  - Finalisation des aspects géométrique du robot : OK
+  - Ajout d'un réservoir pour les balles récupérées : OK
+  - Implémentation des noeuds bas niveau pour l'interface de pilotage : OK (curseurs cmd_vel pour commande manuelle)
+
+- Traitement d'images : 
+  - Récupérer les images de la caméra zénithale sous forme d'image OpenCV : OK
+  - Effectuer les prétraitements nécessaires (déformations géométriques et couleurs) : OK
+  - Localiser les balles de tennis et le robot : OK
+  - Réaliser un tracking des balles de tennis et du robot : OK
+
 
 
 ### Ce qui n'a pas fonctionné
-- Récupération de l'image via cvBridge
+
+- Mauvaise maîtrise/utilisation de Taiga
+
+- Implémentation des noeuds de téléopération : ajouter commande manuelle par keyboard car curseurs peu pratiques
+
+- Tester et choisir les parties de la stack de navigation de ROS 2 qui seront utilisées la partie autonomie (path planning, costmaps, etc.) : NON FAIT (manque de temps)
+
+- Garder l'ordre des balles lors du tracking
 
 
 
 ### Retour d'expérience du PO
-- Mise en place du projet, pourcentage de tâches réalisées relativement faible par rapport aux attentes de début de séance.
 
+- Dificulté à switcher entre gestion du projet et implémentation, à travailler.
 
 ### Conseils pour le prochain PO
 
+- Fixer des objectifs plus SMART.
 
 ## Nouvelles mesures
 
-###### A compléter avec les nouvelles mesures prises pour répondre aux problèmes rencontrées par l'équipe pendant le sprint. Ces mesures peuvent aller d'une convention de nommage à un changement radical dans la construction du robot, ou encore un flow spécifique de travail.
+- S'entraîner à utiliser Taiga et mettre à jour le projet plus régulièrement lors des prochaines séances
