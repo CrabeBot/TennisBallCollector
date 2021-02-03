@@ -5,9 +5,9 @@ Ceci est un template de dépôt Git pour le cours d'ingénierie système et mod�
 
 ## Lancer la simulation
 
-### Dépendences
-
-###### A compléter avec la/les dépendences.
+### Dépendances
+ros-foxy-navigation2 ros-foxy-nav2-bringup
+OpenCV 4.2
 
 
 ### Démarrer la simulation
@@ -21,14 +21,14 @@ Ceci est un template de dépôt Git pour le cours d'ingénierie système et mod�
 ## Groupe
 
 ### Membres
-
-###### A compléter avec les membres du groupe.
-
+- Romane FLECHARD
+- Corentin LEMOINE
+- Colin BAUMGARD
+- Hamid HACENE
 
 ### Gestion de projet
 
-###### A compléter avec le lien vers votre [Taiga](https://taiga.io).
-
+Lien vers le projet [Taiga](https://tree.taiga.io/project/hamidhacene-crabebot/timeline)
 
 
 ## Structure du dépôt
