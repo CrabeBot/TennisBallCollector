@@ -4,40 +4,42 @@ from std_msgs.msg import Int32
 from sensor_msgs.msg import Image, CameraInfo
 import cv_bridge
 import cv2
-import rclpy.qos as qos
+from rclpy.qos import qos_profile_sensor_data
+
+import rclpy
+from rclpy.node import Node
 
 
 class saver(Node):
     def __init__(self):
         super().__init__("saver")
-        self.profile = qos.QoSPresetProfiles.get_from_short_key('SENSOR_DATA')
-        print(type(self.profile))
+        self.profile = qos_profile_sensor_data
         self.im_subscriber = self.create_subscription(Image, "/zenith_camera/image_raw", self.im_callback, qos_profile=self.profile)
-        self.str_subscriber = self.create_subscription(Int32, "/cmd", self.str_callback, qos_profile=self.profile)
-        self.cmd = 1
-        self.spin = True
-
-    def str_callback(self, msg):
-        print("\tclb_str")
-        self.cmd = msg.data
+        self.img = 0
 
     def im_callback(self, msg):
-        print("clb_im")
-        bridge = cv_bridge.CvBridge()
-        cv_im = bridge.imgmsg_to_cv2(msg.data)
-        print("affichage window")
-        cv2.imshow("cv_im", cv_im)
-        self.spin = False
-        
+        if self.img <= 100:
+            bridge = cv_bridge.CvBridge()
+            print("Got image")
+            print(msg.encoding)
+            cv_im = bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
+            print(cv_im.shape)
+            print("affichage window")
+            #cv2.imshow("cv_im", cv_im)
+            cv2.imwrite("/home/corentin/Documents/CrabeWS/src/TennisBallCollector/image_saver/video/image_ball_{0}.png".format(str(self.img)), cv_im)
+            #cv2.waitKey()
+            self.img += 1
+            
 
 def main(args=None):
     rclpy.init(args=args)
     node = saver()
     
-    rate = node.create_rate(10)
-    while node.spin:
-        rate.sleep()
+    rclpy.spin(node)
 
+    # Destroy the node explicitly
+    # (optional - otherwise it will be done automatically
+    # when the garbage collector destroys the node object)
     node.destroy_node()
     rclpy.shutdown()
 

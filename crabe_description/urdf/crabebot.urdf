@@ -1,0 +1,424 @@
+<?xml version="1.0"?>
+
+<robot name="crabe" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+   <xacro:macro name="mat1">
+        <mu1>1.2</mu1>
+        <mu2>1.2</mu2>
+        <kp>500000.0</kp>
+        <kd>10.0</kd>
+        <minDepth>0.001</minDepth>
+        <maxVel>0.1</maxVel>
+        <material>Gazebo/FlatBlack</material>
+    </xacro:macro>
+
+    <xacro:macro name="mat2">
+        <mu1>0.5</mu1>
+        <mu2>0.09</mu2>
+        <material>Gazebo/FlatBlack</material>
+    </xacro:macro>
+
+    <!-- Scale -->
+    <xacro:property name="scale" value="2" />
+
+    <!-- box -->
+    <xacro:property name="l_body" value="${0.4*scale}" />
+    <xacro:property name="L_body" value="${0.3*scale}" />
+    <xacro:property name="h_body" value="${0.1*scale}" />    
+    <xacro:property name="m_body" value="${scale**3*1.0}" />
+    <!-- roues -->
+    <xacro:property name="r_wheel" value="${scale*0.1}" />
+    <xacro:property name="h_wheel" value="${scale*0.05}" />
+    <xacro:property name="eps_wheel" value="${scale*0.01}" />
+    <xacro:property name="m_wheel" value="${scale**3*.4}" />
+
+    <!-- cibles -->
+    <xacro:property name="r_cible" value="${scale*0.03}" />
+    <xacro:property name="h_cible" value="${scale*0.05}" />
+    <xacro:property name="m_cible" value="${scale*0.01}" />
+
+
+    <!-- arm -->
+    <xacro:property name="l_arm" value="${scale*0.2}" />
+    <xacro:property name="L_arm" value="${scale*0.01}" />
+    <xacro:property name="h_arm" value="${scale*0.08}" />
+    <xacro:property name="alpha_arm" value="${pi/4}" />
+    <xacro:property name="m_arm" value="${scale**3*0.1}" />
+    
+
+    <!-- Free wheel -->
+    <xacro:property name="r_free" value="${scale*0.05}" />
+    <xacro:property name="m_free" value="${scale**3*1}" />
+
+    <!-- balles -->
+    <xacro:property name="d_balle" value="${0.07}" />
+    <xacro:property name="eps_balle" value="${0.01}" />
+
+    <!-- murs -->
+    <xacro:property name="e_murs" value="${scale*0.01}" />
+    <xacro:property name="h_murs" value="${scale*0.08}" />
+    <xacro:property name="l_murs" value="${l_body}" />
+    <xacro:property name="l_mur_f" value="${scale*(d_balle+2*eps_balle)+2*e_murs}" />
+    <xacro:property name="m_mur_long" value="${scale**3*0.1}" />
+    <xacro:property name="m_mur_f" value="${scale**3*0.01}" />
+
+    <!-- Links-->
+
+    <!-- body -->
+    <link name="body">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <box size="${l_body} ${L_body} ${h_body}"/>
+            </geometry>
+        </visual>
+        <inertial>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <mass value="${m_body}"/>
+            <inertia ixx="${m_body*(h_body**2+L_body**2)/12}" ixy="0.0" ixz="0.0" iyy="${m_body*(h_body**2+l_body**2)/12}" iyz="0.0" izz="${m_body*(L_body**2+l_body**2)/12}"/>
+        </inertial>
+        <collision>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <box size="${l_body} ${L_body} ${h_body}"/>
+            </geometry>
+        </collision>
+    </link>
+    <gazebo reference="body">
+        <material>Gazebo/WhiteGlow</material>
+    </gazebo>
+
+    <!-- Roues -->
+    <link name="L_wheel">
+        <visual>
+            <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
+            <geometry>
+                <cylinder radius="${r_wheel}" length="${h_wheel}"/>
+            </geometry>
+        </visual>
+        <inertial>
+            <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
+            <mass value="${m_wheel}"/>
+            <inertia ixx="${m_wheel*(3*r_wheel**2+h_wheel**2)/12}" ixy="0.0" ixz="0.0" iyy="${m_wheel*(3*r_wheel**2+h_wheel**2)/12}" iyz="0.0" izz="${m_wheel*r_wheel**2/2}"/>
+        </inertial>
+        <collision>
+            <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
+            <geometry>
+                <cylinder radius="${r_wheel}" length="${h_wheel}"/>
+            </geometry>
+        </collision>
+    </link>
+    <gazebo reference="L_wheel">
+        <xacro:mat1/>
+    </gazebo>
+
+    <link name="R_wheel">
+        <visual>
+            <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
+            <geometry>
+                <cylinder radius="${r_wheel}" length="${h_wheel}"/>
+            </geometry>
+        </visual>
+        <inertial>
+            <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
+            <mass value="${m_wheel}"/>
+           <inertia ixx="${m_wheel*(3*r_wheel**2+h_wheel**2)/12}" ixy="0.0" ixz="0.0" iyy="${m_wheel*(3*r_wheel**2+h_wheel**2)/12}" iyz="0.0" izz="${m_wheel*r_wheel**2/2}"/>
+        </inertial>
+        <collision>
+            <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
+            <geometry>
+                <cylinder radius="${r_wheel}" length="${h_wheel}"/>
+            </geometry>
+        </collision>
+    </link>
+    <gazebo reference="R_wheel">
+        <xacro:mat1/>
+    </gazebo>
+
+
+
+    <!-- Cibles -->
+
+    <link name="cible_verte">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <cylinder radius="${r_cible}" length="${h_cible}"/>
+            </geometry>
+        </visual>
+        <inertial>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <mass value="${m_cible}"/>
+            <inertia ixx="${m_cible*(3*r_cible*r_cible+h_cible*h_cible)/12}" ixy="0.0" ixz="0.0" iyy="${m_cible*(3*r_cible*r_cible+h_cible*h_cible)/12}" iyz="0.0" izz="${m_cible*r_cible*r_cible/2}"/>
+        </inertial>
+        <collision>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <cylinder radius="${r_cible}" length="${h_cible}"/>
+            </geometry>
+        </collision>
+    </link>
+    <gazebo reference="cible_verte">
+        <material>Gazebo/Green</material>
+    </gazebo>
+
+    <link name="cible_rouge">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <cylinder radius="${r_cible}" length="${h_cible}"/>
+            </geometry>
+        </visual>
+        <inertial>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <mass value="${m_cible}"/>
+            <inertia ixx="${m_cible*(3*r_cible*r_cible+h_cible*h_cible)/12}" ixy="0.0" ixz="0.0" iyy="${m_cible*(3*r_cible*r_cible+h_cible*h_cible)/12}" iyz="0.0" izz="${m_cible*r_cible*r_cible/2}"/>
+        </inertial>
+        <collision>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <cylinder radius="${r_cible}" length="${h_cible}"/>
+            </geometry>
+        </collision>
+    </link>
+    <gazebo reference="cible_rouge">
+        <material>Gazebo/Red</material>
+    </gazebo>
+
+    <!-- arm -->
+    <link name="Left_arm">
+
+        <visual>
+            <geometry>
+                <box size="${l_arm} ${L_arm} ${h_arm}"/>
+            </geometry>
+        </visual>
+        <collision>
+            <geometry>
+                <box size="${l_arm} ${L_arm} ${h_arm}"/>
+            </geometry>
+        </collision>
+        <inertial>
+            <mass value="${m_arm}"/>
+            <inertia ixx="${m_arm*(h_arm*h_arm + L_arm*L_arm)/12}" ixy="0.0" ixz="0.0" iyy="${m_arm*(m_arm*m_arm+h_arm*h_arm)/12}" iyz="0.0" izz="${m_arm*(L_arm*L_arm+l_arm*l_arm)/12}"/>
+        </inertial>
+    </link>
+
+    <link name="Right_arm">
+        <visual>
+            <geometry>
+                <box size="${l_arm} ${L_arm} ${h_arm}"/>
+            </geometry>
+        </visual>
+        <collision>
+            <geometry>
+                <box size="${l_arm} ${L_arm} ${h_arm}"/>
+            </geometry>
+        </collision>
+        <inertial>
+            <mass value="${m_arm}"/>
+            <inertia ixx="${m_arm*(h_arm*h_arm + L_arm*L_arm)/12}" ixy="0.0" ixz="0.0" iyy="${m_arm*(m_arm*m_arm+h_arm*h_arm)/12}" iyz="0.0" izz="${m_arm*(L_arm*L_arm+l_arm*l_arm)/12}"/>
+        </inertial>
+    </link>
+
+
+
+    <!-- reservoir -->
+    <link name="Left_mur">
+        <visual>
+            <geometry>
+                <box size="${l_murs} ${e_murs} ${h_murs}"/>
+            </geometry>
+        </visual>
+        <collision>
+            <geometry>
+                <box size="${l_murs} ${e_murs} ${h_murs}"/>
+            </geometry>
+        </collision>
+        <inertial>
+            <mass value="${m_mur_long}"/>
+            <inertia ixx="${m_mur_long*(h_murs*h_murs + e_murs*e_murs)/12}" ixy="0.0" ixz="0.0" iyy="${m_mur_long*(m_mur_long*m_mur_long+h_murs*h_murs)/12}" iyz="0.0" izz="${m_mur_long*(e_murs*e_murs+l_murs*l_murs)/12}"/>
+        </inertial>
+    </link>
+
+    <link name="Right_mur">
+        <visual>
+            <geometry>
+                <box size="${l_murs} ${e_murs} ${h_murs}"/>
+            </geometry>
+        </visual>
+        <collision>
+            <geometry>
+                <box size="${l_murs} ${e_murs} ${h_murs}"/>
+            </geometry>
+        </collision>
+        <inertial>
+            <mass value="${m_mur_long}"/>
+            <inertia ixx="${m_mur_long*(h_murs*h_murs + e_murs*e_murs)/12}" ixy="0.0" ixz="0.0" iyy="${m_mur_long*(m_mur_long*m_mur_long+h_murs*h_murs)/12}" iyz="0.0" izz="${m_mur_long*(e_murs*e_murs+l_murs*l_murs)/12}"/>
+        </inertial>
+    </link>
+
+    <link name="Mur_f">
+        <visual>
+            <geometry>
+                <box size="${l_mur_f} ${e_murs} ${h_murs}"/>
+            </geometry>
+        </visual>
+        <collision>
+            <geometry>
+                <box size="${l_mur_f} ${e_murs} ${h_murs}"/>
+            </geometry>
+        </collision>
+        <inertial>
+            <mass value="${m_mur_f}"/>
+            <inertia ixx="${m_mur_f*(h_murs*h_murs + e_murs*e_murs)/12}" ixy="0.0" ixz="0.0" iyy="${m_mur_f*(m_mur_f*m_mur_f+h_murs*h_murs)/12}" iyz="0.0" izz="${m_mur_f*(e_murs*e_murs+l_mur_f*l_mur_f)/12}"/>
+        </inertial>
+    </link>
+
+
+
+
+    <!-- Caster Wheels -->
+
+    <link name="caster_wheel_1">
+        <visual>
+            <geometry>
+                    <sphere radius="${r_free}"/>
+            </geometry>
+        </visual>
+        <collision>
+        <geometry>            
+            <sphere radius="${r_free}"/>
+            </geometry>
+        </collision>
+        <inertial>
+            <mass value="${m_free}"/>
+            <inertia ixx="${2*m_free*r_free**2/5}" ixy="0.0" ixz="0.0" iyy="${2*m_free*r_free**2/5}" iyz="0.0" izz="${2*m_free*r_free**2/5}"/>
+        </inertial>
+    </link>
+    <gazebo reference="caster_wheel_1">
+        <xacro:mat2/>
+    </gazebo>
+
+
+    <link name="caster_wheel_2">
+        <visual>
+            <geometry>
+                    <sphere radius="${r_free}"/>
+            </geometry>
+        </visual>
+        <collision>
+        <geometry>            
+            <sphere radius="${r_free}"/>
+            </geometry>
+        </collision>
+        <inertial>
+            <mass value="${m_free}"/>
+            <inertia ixx="${2*m_free*r_free**2/5}" ixy="0.0" ixz="0.0" iyy="${2*m_free*r_free**2/5}" iyz="0.0" izz="${2*m_free*r_free**2/5}"/>
+        </inertial>
+    </link>
+    <gazebo reference="caster_wheel_2">
+        <xacro:mat2/>
+    </gazebo>
+    
+
+    <!-- Joints-->
+    <joint name="Body_L_wheel" type="continuous">
+        <parent link="body"/>
+        <child link="L_wheel"/>
+        <origin xyz="${l_body/4} ${L_body/2+h_wheel/2+eps_wheel} ${-h_body/2}"/>
+        <axis xyz="0 1 0"/>
+    </joint>
+
+    <joint name="Body_R_wheel" type="continuous">
+        <parent link="body"/>
+        <child link="R_wheel"/>
+        <origin xyz="${l_body/4} -${L_body/2+h_wheel/2+eps_wheel} ${-h_body/2}"/>
+        <axis xyz="0 1 0"/>
+    </joint>
+
+
+    <joint name="body_cible_verte" type="fixed">
+        <parent link="body"/>
+        <child link="cible_verte"/>
+        <origin xyz="0 ${L_body/3} ${h_body/2}"/><!-- xyz="-${3*l_body/8} ${L_body/3} ${h_body/2}"-->
+    </joint>
+
+    <joint name="body_cible_rouge" type="fixed">
+        <parent link="body"/>
+        <child link="cible_rouge"/>
+        <origin xyz="0 -${L_body/3} ${h_body/2}"/><!-- xyz="-${3*l_body/8} -${L_body/3} ${h_body/2}"-->
+    </joint>
+
+    <joint name="body_L_arm" type="fixed">
+        <origin xyz="${cos(alpha_arm)*l_arm/2 + l_body/2} ${sin(alpha_arm)*l_arm/2 + l_mur_f/2 - e_murs/2} -${h_body/2+h_arm/2}" rpy="0 0 ${alpha_arm}"/>
+        <parent link="body"/>
+        <child link="Left_arm"/>
+    </joint>
+
+    <joint name="body_R_arm" type="fixed">
+        <origin xyz="${cos(alpha_arm)*l_arm/2 + l_body/2} -${sin(alpha_arm)*l_arm/2 + l_mur_f/2 - e_murs/2} -${h_body/2+h_arm/2}" rpy="0 0 -${alpha_arm}"/>
+        <parent link="body"/>
+        <child link="Right_arm"/>
+    </joint>
+
+    <joint name="base_casterWheel_1" type="fixed">
+        <origin xyz="-${3*l_body/8} ${3*L_body/8} -${r_free + h_body/2}"/>
+        <parent link="body"/>
+        <child link="caster_wheel_1"/>
+    </joint>
+
+    <joint name="base_casterWheel_2" type="fixed">
+        <origin xyz="-${3*l_body/8} -${3*L_body/8} -${r_free + h_body/2}"/>
+        <parent link="body"/>
+        <child link="caster_wheel_2"/>
+    </joint>
+
+    <joint name="body_L_mur" type="fixed">
+        <origin xyz="0 ${l_mur_f/2 - e_murs/2} -${h_body/2+h_murs/2}" rpy="0 0 0"/>
+        <parent link="body"/>
+        <child link="Left_mur"/>
+    </joint>
+
+    <joint name="body_R_mur" type="fixed">
+        <origin xyz="0 -${l_mur_f/2 - e_murs/2} -${h_body/2+h_murs/2}" rpy="0 0 0"/>
+        <parent link="body"/>
+        <child link="Right_mur"/>
+    </joint>
+
+    <joint name="body_mur_f" type="fixed">
+        <origin xyz="-${l_body/2 + e_murs/2} 0 -${h_body/2+h_murs/2}" rpy="0 0 ${pi/2}"/>
+        <parent link="body"/>
+        <child link="Mur_f"/>
+    </joint>
+
+    <gazebo>
+        <plugin name="joint_states" filename="libgazebo_ros_joint_state_publisher.so">
+            <joint_name>Body_R_wheel</joint_name>
+            <joint_name>Body_L_wheel</joint_name>
+        </plugin>
+        
+        <plugin name='diff_drive' filename='libgazebo_ros_diff_drive.so'>
+            <update_rate>500</update_rate>
+            <!-- wheels -->
+            <left_joint>Body_L_wheel</left_joint>
+            <right_joint>Body_R_wheel</right_joint>
+
+            <!-- kinematics -->
+            <wheel_separation>${L_body+2*eps_wheel+h_wheel}</wheel_separation>
+            <wheel_diameter>${2*r_wheel}</wheel_diameter>
+
+            <!-- limits -->
+            <max_wheel_torque>20</max_wheel_torque>
+            <max_acceleration>1.0</max_acceleration>
+
+            <!-- output -->
+            <publish_odom>true</publish_odom>
+            <publish_odom_tf>true</publish_odom_tf>
+            <publish_wheel_tf>true</publish_wheel_tf>
+            <odometry_frame>odom</odometry_frame>
+            <robot_base_frame>body</robot_base_frame>
+        </plugin>
+    </gazebo>
+
+</robot>
