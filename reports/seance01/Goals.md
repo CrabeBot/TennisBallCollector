@@ -4,7 +4,8 @@ PO: Corentin Lemoine
 
 
 ## Fonctionnalités attendues
-- Mettre les 10 balles dans les zones designées, en maximisant le nombre de points obtenus.
+- Avoir défini une stratégie pour mettre les 10 balles dans les zones designées, en maximisant le nombre de points obtenus.
+- Avoir une première description du robot (fichier urdf)
 - Se localiser grâce à la caméra zénithale.
 
 
