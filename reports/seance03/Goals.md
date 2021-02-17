@@ -29,9 +29,13 @@ PO: Romane FLÉCHARD
 --> Navigation / Contrôle du robot :
       - Ajouter commande manuelle du robot par keyboard pour tests Gazebo
       - Faire schéma architecture ROS du projet et définir les communications entre les différents noeuds
-      - Créer noeud ROS de navigation (uniquement la structure pour l'instant)
-      - Définir stratégie de déplacement du robot pour le ramassage des balles
-      - Définir stratégie d'évitement d'obstacles (statiques et dynamiques)
+      - Définir stratégie de déplacement du robot pour le ramassage des balles et l'évitement d'obstacles
+      - Commencer à coder la commande du robot : 
+            - Envoi de la position des obstacles sur un topic
+            - Envoi de la position des balles sur un topic
+            - Création d'une fsm
+            - Création d'un path_planner
+            - Création d'un noeud contrôleur
 
 
 ## Challenges techniques
