@@ -34,16 +34,15 @@ class localizer(Node):
         self.y_history = deque(maxlen=self.SMOOTHING)
         self.theta_history = deque(maxlen=self.SMOOTHING)
 
-        self.x = 0
-        self.y = 0
-        self.theta = 0
+        self.x = 0.0
+        self.y = 0.0
+        self.theta = 0.0
         
         timer_period = 0.1  # seconds
         self.timer = self.create_timer(timer_period, self.sendTransform)
         
     def sendTransform(self):
         t = geometry_msgs.msg.TransformStamped()
-        self.get_logger().info(str(self.get_clock().now()))
         t.header.stamp = self.get_clock().now().to_msg()
         t.header.frame_id = "odom"
         t.child_frame_id = "base_link"
@@ -56,9 +55,7 @@ class localizer(Node):
         #tf_msg = TFMessage()
         #tf_msg.transforms = [t]
         #self.tf_publisher.publish(tf_msg)
-        self.br.sendTransform(t)
-
-    
+        self.br.sendTransform(t) 
     
 
     def rpy2Quaternion(self, roll, pitch, yaw):
@@ -144,10 +141,16 @@ class localizer(Node):
             self.y_history.append(ry)
             self.theta_history.append(robotTheta)
 
-            self.x = mean(self.x_history)
-            self.y = mean(self.y_history)
+            x = mean(self.x_history)
+            y = mean(self.y_history)
+
+            v = np.array(x + 3, y + 1.5)
+            dist = np.linalg.norm(v)
+            dx = v/dist * (0.02552044*dist + 0.03968411)
+            self.x = x + dx[0]
+            self.y = y + dx[1]
             self.theta = mean(self.theta_history)
-        except:
+        except Exception as e:
             print("Robot not found")
             
 
