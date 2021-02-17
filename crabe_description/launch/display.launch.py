@@ -54,13 +54,14 @@ def generate_launch_description():
         executable='rqt_robot_steering',
     )
 
-
     rviz_node = Node(
         package='rviz2',
         executable='rviz2',
         output='screen',
         arguments=['-d', LaunchConfiguration('rviz_config')]
     )
+
+    
 
 
     # On ajoute tous les noeuds créés à la LaunchDescription
@@ -76,3 +77,5 @@ def generate_launch_description():
 
     # La fonction retourne le LaunchDescription object, qui contient tous les noeuds à lancer.
     return ld
+
+    
