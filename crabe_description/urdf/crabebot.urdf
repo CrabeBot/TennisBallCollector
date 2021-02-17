@@ -341,13 +341,13 @@
     <joint name="body_cible_verte" type="fixed">
         <parent link="body"/>
         <child link="cible_verte"/>
-        <origin xyz="-${3*l_body/8} ${L_body/3} ${h_body/2}"/>
+        <origin xyz="0 ${L_body/3} ${h_body/2}"/><!-- xyz="-${3*l_body/8} ${L_body/3} ${h_body/2}"-->
     </joint>
 
     <joint name="body_cible_rouge" type="fixed">
         <parent link="body"/>
         <child link="cible_rouge"/>
-        <origin xyz="-${3*l_body/8} -${L_body/3} ${h_body/2}"/>
+        <origin xyz="0 -${L_body/3} ${h_body/2}"/><!-- xyz="-${3*l_body/8} -${L_body/3} ${h_body/2}"-->
     </joint>
 
     <joint name="body_L_arm" type="fixed">
