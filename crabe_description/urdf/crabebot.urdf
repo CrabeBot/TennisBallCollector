@@ -275,6 +275,23 @@
         </inertial>
     </link>
 
+    <link name="Front_door">
+        <visual>
+            <geometry>
+                <box size="${l_mur_f - 2*e_murs} ${e_murs} ${h_murs}"/>
+            </geometry>
+        </visual>
+        <collision>
+            <geometry>
+                <box size="${l_mur_f - 2*e_murs} ${e_murs} ${h_murs}"/>
+            </geometry>
+        </collision>
+        <inertial>
+            <mass value="${m_mur_f}"/>
+            <inertia ixx="${m_mur_f*(h_murs*h_murs + e_murs*e_murs)/12}" ixy="0.0" ixz="0.0" iyy="${m_mur_f*(m_mur_f*m_mur_f+h_murs*h_murs)/12}" iyz="0.0" izz="${m_mur_f*(e_murs*e_murs+l_mur_f*l_mur_f)/12}"/>
+        </inertial>
+    </link>
+
 
 
 
@@ -386,10 +403,20 @@
         <child link="Right_mur"/>
     </joint>
 
-    <joint name="body_mur_f" type="fixed">
+    <joint name="body_mur_f" type="prismatic">
         <origin xyz="-${l_body/2 + e_murs/2} 0 -${h_body/2+h_murs/2}" rpy="0 0 ${pi/2}"/>
         <parent link="body"/>
         <child link="Mur_f"/>
+        <axis xyz="0 0 1"/>
+        <limit upper="${h_murs}" lower="0" effort="2000" velocity="10"/>
+    </joint>
+
+    <joint name="body_front_door" type="prismatic">
+        <origin xyz="${l_body/2 + e_murs/2} 0 -${h_body/2+h_murs/2}" rpy="0 0 ${pi/2}"/>
+        <parent link="body"/>
+        <child link="Front_door"/>
+        <axis xyz="0 0 1"/>
+        <limit upper="${h_murs}" lower="0" effort="2000" velocity="10"/>
     </joint>
 
     <gazebo>
@@ -397,6 +424,7 @@
             <joint_name>Body_R_wheel</joint_name>
             <joint_name>Body_L_wheel</joint_name>
         </plugin>
+
         
         <plugin name='diff_drive' filename='libgazebo_ros_diff_drive.so'>
             <update_rate>500</update_rate>
@@ -419,6 +447,38 @@
             <odometry_frame>odom</odometry_frame>
             <robot_base_frame>body</robot_base_frame>
         </plugin>
+
+        <plugin name="gazebo_ros_force" filename="libgazebo_ros_force.so">
+
+            <ros>
+                <!-- Add namespace and remap the default topic -->
+                <argument>gazebo_ros_force:=force_back_door</argument>
+            </ros>
+
+            <!-- Replace camelCase elements with camel_case ones -->
+            <link_name>Mur_f</link_name>
+
+            <!-- New elements -->
+            <force_frame>world</force_frame>
+
+        </plugin>
+
+        <plugin name="gazebo_ros_force" filename="libgazebo_ros_force.so">
+
+            <ros>
+                <!-- Add namespace and remap the default topic -->
+                <argument>gazebo_ros_force:=force_front_door</argument>
+            </ros>
+
+            <!-- Replace camelCase elements with camel_case ones -->
+            <link_name>Front_door</link_name>
+
+            <!-- New elements -->
+            <force_frame>world</force_frame>
+
+        </plugin>
+
     </gazebo>
+
 
 </robot>
