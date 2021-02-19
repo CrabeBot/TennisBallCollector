@@ -21,7 +21,7 @@ class calibration(Node):
             #transReal = self.tfBuffer.lookup_transform('odom', 'body', self.get_clock().now(), timeout=Duration(seconds=1.0))
             trans = self.tfBuffer.lookup_transform('base_link', 'body', tf2_ros.Time())
             pos  = self.tfBuffer.lookup_transform('base_link', 'odom', tf2_ros.Time())
-            self.f.write("[{}, {}, {}, {}]\n".format(trans.transform.translation.x, trans.transform.translation.y, pos.transform.translation.x, pos.transform.translation.y))
+            self.f.write("{}, {}, {}, {}\n".format(trans.transform.translation.x, trans.transform.translation.y, pos.transform.translation.x, pos.transform.translation.y))
         except Exception as e:
             self.get_logger().error(str(e))
 

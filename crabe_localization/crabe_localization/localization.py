@@ -126,17 +126,17 @@ class localizer(Node):
 
             
 
-            cv2.circle(cv_im, (int(robotx), int(roboty)), 5, (255, 0, 255), -1)
-            cv2.arrowedLine(
-                cv_im, 
-                (int(robotx), 
-                int(roboty)), 
-                (int(robotx) - int(20*np.sin(robotTheta)), int(roboty) - int(20*np.cos(robotTheta))),
-                (0,0,0)
-            )
+            # cv2.circle(cv_im, (int(robotx), int(roboty)), 5, (255, 0, 255), -1)
+            # cv2.arrowedLine(
+            #     cv_im, 
+            #     (int(robotx), 
+            #     int(roboty)), 
+            #     (int(robotx) - int(20*np.sin(robotTheta)), int(roboty) - int(20*np.cos(robotTheta))),
+            #     (0,0,0)
+            # )
 
-            cv2.imshow("cv_im", cv_im)
-            cv2.waitKey(1)
+            # cv2.imshow("cv_im", cv_im)
+            # cv2.waitKey(1)
 
             rx, ry = self.imgCoordToTF(roboty, robotx)
             
@@ -150,9 +150,9 @@ class localizer(Node):
             v = np.array([x + 3, y + 1.5])
             dist = np.linalg.norm(v)
             dx = v/dist * (0.02552044*dist + 0.03968411)
-            self.get_logger().info(str(dx))
             self.x = x - dx[0]
             self.y = y - dx[1]
+            self.get_logger().info("x : {:.2f}, y : {:.2f}, theta : {:.2f}".format(self.x, self.y, self.theta))
             self.theta = mean(self.theta_history)
         except Exception as e:
             print("Robot not found : " + str(e))
