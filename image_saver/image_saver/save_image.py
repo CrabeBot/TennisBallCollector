@@ -24,10 +24,10 @@ class saver(Node):
             print(msg.encoding)
             cv_im = bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
             print(cv_im.shape)
-            print("affichage window")
-            #cv2.imshow("cv_im", cv_im)
-            cv2.imwrite("/home/corentin/Documents/CrabeWS/src/TennisBallCollector/image_saver/video/image_ball_{0}.png".format(str(self.img)), cv_im)
-            #cv2.waitKey()
+            cv2.imshow("cv_im", cv_im)
+            cv2.imwrite("/home/corentin/Pictures/image_ball_{0}.png".format(str(self.img)), cv_im)
+            print("/home/corentin/Pictures/image_ball_{0}.png".format(str(self.img)))
+            cv2.waitKey(1)
             self.img += 1
             
 
