@@ -1,6 +1,8 @@
+
 # Debrief du 03/02
 
 PO: Hamid Hacene
+
 
 
 ## Bilan
@@ -37,6 +39,7 @@ Pourcentage de tâches réalisées: 80 %
 
 
 
+
 ### Retour d'expérience du PO
 
 - Dificulté à switcher entre gestion du projet et implémentation, à travailler.
@@ -48,3 +51,4 @@ Pourcentage de tâches réalisées: 80 %
 ## Nouvelles mesures
 
 - S'entraîner à utiliser Taiga et mettre à jour le projet plus régulièrement lors des prochaines séances
+
