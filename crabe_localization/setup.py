@@ -1,6 +1,6 @@
 from setuptools import setup
 
-package_name = 'CRAB_localization'
+package_name = 'crabe_localization'
 
 setup(
     name=package_name,
@@ -22,8 +22,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            "localizer = CRAB_localization.localization:main",
-            "calibration = CRAB_localization.calibration:main",
+            "localizer = crabe_localization.localization:main",
+            "calibration = crabe_localization.calibration:main",
         ],
     },
 )

@@ -6,13 +6,13 @@ def generate_launch_description():
     ld = LaunchDescription()
 
     loc_node = Node(
-        package='CRAB_localization',
+        package='crabe_localization',
         executable='localizer',
         parameters=[{'use_sim_time': True}]
     )
 
     cal_node = Node(
-        package='CRAB_localization',
+        package='crabe_localization',
         executable='calibration',
         parameters=[{'use_sim_time': True}]
     )

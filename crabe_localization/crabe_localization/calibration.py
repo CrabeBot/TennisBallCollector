@@ -9,7 +9,7 @@ from geometry_msgs.msg import Quaternion
 
 class calibration(Node):
     def __init__(self):
-        self.f = open("/home/corentin/Documents/CrabeWS/src/TennisBallCollector/CRAB_localization/CRAB_localization/measure.csv", 'w')
+        self.f = open("/home/corentin/Documents/CrabeWS/src/TennisBallCollector/crabe_localization/crabe_localization/measure.csv", 'w')
         super().__init__("calibration")
         self.tfBuffer = tf2_ros.Buffer()
         self.listener = tf2_ros.TransformListener(self.tfBuffer, self)
