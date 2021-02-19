@@ -144,14 +144,15 @@ class localizer(Node):
             x = mean(self.x_history)
             y = mean(self.y_history)
 
-            v = np.array(x + 3, y + 1.5)
+            v = np.array([x + 3, y + 1.5])
             dist = np.linalg.norm(v)
             dx = v/dist * (0.02552044*dist + 0.03968411)
-            self.x = x + dx[0]
-            self.y = y + dx[1]
+            self.get_logger().info(str(dx))
+            self.x = x - dx[0]
+            self.y = y - dx[1]
             self.theta = mean(self.theta_history)
         except Exception as e:
-            print("Robot not found")
+            print("Robot not found : " + str(e))
             
 
 def main(args=None):
