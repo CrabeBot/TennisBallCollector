@@ -1,11 +1,10 @@
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import Int32
+from std_msgs.msg import Int32, Float32MultiArray, Int32MultiArray
 from sensor_msgs.msg import Image, CameraInfo
 
+
 from rclpy.qos import qos_profile_sensor_data
-import rclpy
-from rclpy.node import Node
 import tf2_py
 
 import tf2_ros
@@ -16,53 +15,46 @@ import cv2
 import cv_bridge
 from scipy.spatial import distance_matrix
 
-from tf2_msgs.msg import TFMessage
-
 
 class b_localizer(Node):
     def __init__(self):
         super().__init__("b_localizer")
+        self.balls_publisher = self.create_publisher(Float32MultiArray, "/balls_coords", 10)
+        self.ind_disappeared_publisher = self.create_publisher(Int32MultiArray, "/balls_disappeared", 10)
         self.profile = qos_profile_sensor_data
         self.im_subscriber = self.create_subscription(Image, "/zenith_camera/image_raw", self.im_callback2, qos_profile=self.profile)
+        
 
-        self.br = tf2_ros.TransformBroadcaster(self)
-        #self.tf_publisher = self.create_publisher(msg_type=TFMessage, topic="/tf", qos_profile=self.profile)
+        self.ind_disappeared = []
+        self.visualize = True        
         self.bridge = cv_bridge.CvBridge()
         self.old_image = None
         self.old_coords = None
         self.old_gray = None
         self.backup = None
         self.first_spin = True
+        self.lk_params = dict( winSize  = (15,15),
+                            maxLevel = 10,
+                            criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
 
-    def rpy2Quaternion(self, roll, pitch, yaw):
-        # Abbreviations for the various angular functions
-        cy = np.cos(yaw * 0.5)
-        sy = np.sin(yaw * 0.5)
-        cp = np.cos(pitch * 0.5)
-        sp = np.sin(pitch * 0.5)
-        cr = np.cos(roll * 0.5)
-        sr = np.sin(roll * 0.5)
-
-        q = Quaternion()
-        q.w = cr * cp * cy + sr * sp * sy
-        q.x = sr * cp * cy - cr * sp * sy
-        q.y = cr * sp * cy + sr * cp * sy
-        q.z = cr * cp * sy - sr * sp * cy
-
-        return q
-
-    def imgCoordToTF(self, ix, iy):
-        return (
-            -0.02392*ix + 8.56684846, 
-            (iy-639.98)/(-41.842)
-            )
+        self.im_width = 1280
+        self.im_height = 720
+    
+    def imgToWorld(self, px, py):
+        u = px - self.im_width/2
+        v = py - self.im_height/2
+        x = -v
+        y = -u
+        wx = x*0.025
+        wy = y*0.025
+        return np.array([wx, wy])
 
     def buildMask(self, img):
         hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
         # filtre
         # use the range_detector.py to find the values of lower and upper thresholds
         lower = np.array([20, 90, 90], dtype="uint8")
-        upper = np.array([60, 255, 255], dtype="uint8")
+        upper = np.array([30, 255, 255], dtype="uint8")
         mask = cv2.inRange(hsv, lower, upper)
 
         # some operations on the mask to remove small blobs 
@@ -116,7 +108,7 @@ class b_localizer(Node):
                 # draw the center of the circle
                 cv2.circle(img, (cx,cy), 2, (0,0,255), 3)
             #print("Nombre de balles trouvés : ", len(ballsCoords))
-            self.get_logger().info(f"Nombre de balles trouvés : {len(ballsCoords)}\n")
+            #self.get_logger().info(f"Nombre de balles trouvés : {len(ballsCoords)}\n")
             #self.get_logger().info(f"Ball  spawned")
         else:
             #print("No circle found")
@@ -135,50 +127,84 @@ class b_localizer(Node):
         else:
             # read new image
             new_frame = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
-            lk_params = dict( winSize  = (15,15),
-                            maxLevel = 10,
-                            criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
-        
+ 
             # calculate optical flow    
-            frame_gray = self.buildMask(new_frame)
-            
-            coords1, st, err = cv2.calcOpticalFlowPyrLK(self.old_gray, frame_gray, self.old_coords, None, **lk_params)
-
+            frame_gray = self.buildMask(new_frame)   
+            coords1, st, err = cv2.calcOpticalFlowPyrLK(self.old_gray, frame_gray, self.old_coords, None, **self.lk_params)
             good_new = coords1[(st==1).flatten()]
             good_old = self.old_coords[(st==1).flatten()]
-
             self.old_gray = frame_gray.copy()
             self.old_coords = good_new.reshape(-1,1,2)
             
-            #new try
+            # Check for new balls
             newcoords = self.detectBalls2(new_frame)
-            # print("newcoords", newcoords.shape)
-            # print("coords0", coords0.shape)
-            #print("=======================================")
+            # If any new : 
             if (newcoords.shape[0]>self.old_coords.shape[0]):
                 distance = distance_matrix(self.old_coords.reshape((-1,2)), newcoords)
                 matched = []
                 for k in range(self.old_coords.shape[0]):
-                    #matched.append(newcoords[np.argmin(distance[k,:])])
                     ind = np.argmin(distance[k,:])
                     matched.append(newcoords[ind])
-                    distance[k,ind] = 10000
+                    distance[k,ind] = 100000
                 if len(self.old_coords)<len(newcoords):
                     for l in range(newcoords.shape[0]):
-                        if (np.max(distance[:,l])!=10000):
+                        if (np.max(distance[:,l])!=100000):
                         #if (np.min(distance[:,l])>50):
                             matched.append(newcoords[l])
                 self.old_coords = np.asarray(matched).reshape((newcoords.shape[0],1,2))
+            # If any loss :
+            else:
+                distance = distance_matrix(self.old_coords.reshape((-1,2)), newcoords)
+                matched = []
+                for k in range(self.old_coords.shape[0]):
+                    v = np.min(distance[k,:])
+                    ind = np.argmin(distance[k,:])
+                    if v<50:
+                        matched.append(newcoords[ind])
+                        distance[k,ind] = 10000
+                    else :
+                        matched.append(np.array([self.old_coords[k][0][0], self.old_coords[k][0][1]]))
+                        print("ind : ", ind)
+                        self.ind_disappeared.append(ind)
+                        print("teeeeee : ", self.ind_disappeared)
+                self.old_coords = np.asarray(matched).reshape((self.old_coords.shape[0],1,2))
 
-            print("update\n", self.old_coords)
-            # draw the tracks
-            frame_show = new_frame.copy()
-            for j in range(len(self.old_coords)):
-                a,b = self.old_coords[j][0][0], self.old_coords[j][0][1]
-                frame_show = cv2.circle(frame_show, (a,b), 5, (0,200,0), -1)
-                frame_show = cv2.putText(frame_show, str(j), (int(a)+20,int(b)+20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,0,0), 2)
-            cv2.imshow("tracking", frame_show)
-            cv2.waitKey(1)
+            coords = Float32MultiArray()
+            lst = []
+            if self.visualize:
+            # visualization
+                frame_show = new_frame.copy()
+                for j in range(len(self.old_coords)):
+                    a,b = self.old_coords[j][0][0], self.old_coords[j][0][1]
+                    WX = self.imgToWorld(a, b)
+                    lst.append(WX[0])
+                    lst.append(WX[1])
+                    #print("Ball : ", j, " ---->", WX)
+                    frame_show = cv2.circle(frame_show, (a,b), 5, (0,200,0), -1)
+                    frame_show = cv2.putText(frame_show, str(j), (int(a)+20,int(b)+20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,0,0), 2)
+                coords.data = lst
+                self.balls_publisher.publish(coords)
+
+                index_disappeared = Int32MultiArray()
+
+                print(self.ind_disappeared)
+                index_disappeared.data = [1,2,3]#self.ind_disappeared#.astype("int32")
+                self.ind_disappeared_publisher.publish(index_disappeared)
+                cv2.imshow("tracking", frame_show)
+                cv2.waitKey(1)
+
+            else:
+                index_disappeared = Int32MultiArray()
+                for j in range(len(self.old_coords)):
+                    WX = self.imgToWorld(self.old_coords[j][0][0], self.old_coords[j][0][1])
+                    lst.append(WX[0])
+                    lst.append(WX[1])
+                coords.data = lst
+                self.balls_publisher.publish(coords)
+                
+                index_disappeared.data = self.ind_disappeared
+                self.ind_disappeared_publisher.publish(index_disappeared)
+                #self.get_logger().info(f"Balles : {coords.data}\n")
 
 
 def main(args=None):

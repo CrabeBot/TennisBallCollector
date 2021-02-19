@@ -21,7 +21,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            "b_localizer = balls_localization.b_localization:main"
+            "b_localizer = balls_localization.b_localization:main",
+            "test = balls_localization.test:main"
         ],
     },
 )
