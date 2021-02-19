@@ -5,6 +5,7 @@ import tf2_ros
 import numpy as np
 import geometry_msgs
 from geometry_msgs.msg import Quaternion, Twist, Point
+from std_msgs.msg import Float32
 from rclpy.qos import qos_profile_system_default
 
 from numpy import cos, sin, arctan, arctan2, pi, cross, hstack, array, log, sign
@@ -21,9 +22,12 @@ class calibration(Node):
         self.pub_cmd = self.create_publisher(Twist, "/cmd_vel", qos_profile_system_default)
         self.create_subscription(Point, "/pointA", self.getA)
         self.create_subscription(Point, "/pointB", self.getB)
+        self.create_subscription(Float32, "/vel", self.getVel)
 
         self.a = np.array([[-3.5, 13]]).T
         self.b = np.array([[5, 13]]).T
+        
+        self.vel = 0
 
         timer_period = 0.5  # seconds
         self.timer = self.create_timer(timer_period, self.getTransform)
@@ -31,6 +35,9 @@ class calibration(Node):
 
     def sawtooth(self, x):
         return (x+pi) % (2*pi)-pi
+    
+    def getVel(self, msg):
+        self.vel = msg.data
 
     def getA(self, msg):
         self.a = np.array([[msg.x, msg.y]]).T
@@ -64,7 +71,7 @@ class calibration(Node):
 
             m = Twist()
             m.angular.z = u
-            m.linear.x = 1.0
+            m.linear.x = self.vel
 
             self.pub_cmd.publish(m)
 
