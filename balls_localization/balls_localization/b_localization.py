@@ -33,7 +33,11 @@ class b_localizer(Node):
         self.old_gray = None
         self.backup = None
         self.first_spin = True
+        self.lk_params = dict( winSize  = (15,15),
+                            maxLevel = 10,
+                            criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
 
+    
     def rpy2Quaternion(self, roll, pitch, yaw):
         # Abbreviations for the various angular functions
         cy = np.cos(yaw * 0.5)
@@ -135,43 +139,32 @@ class b_localizer(Node):
         else:
             # read new image
             new_frame = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
-            lk_params = dict( winSize  = (15,15),
-                            maxLevel = 10,
-                            criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
-        
+ 
             # calculate optical flow    
-            frame_gray = self.buildMask(new_frame)
-            
-            coords1, st, err = cv2.calcOpticalFlowPyrLK(self.old_gray, frame_gray, self.old_coords, None, **lk_params)
-
+            frame_gray = self.buildMask(new_frame)   
+            coords1, st, err = cv2.calcOpticalFlowPyrLK(self.old_gray, frame_gray, self.old_coords, None, **self.lk_params)
             good_new = coords1[(st==1).flatten()]
             good_old = self.old_coords[(st==1).flatten()]
-
             self.old_gray = frame_gray.copy()
             self.old_coords = good_new.reshape(-1,1,2)
             
-            #new try
+            # Check for new balls
             newcoords = self.detectBalls2(new_frame)
-            # print("newcoords", newcoords.shape)
-            # print("coords0", coords0.shape)
-            #print("=======================================")
             if (newcoords.shape[0]>self.old_coords.shape[0]):
                 distance = distance_matrix(self.old_coords.reshape((-1,2)), newcoords)
                 matched = []
                 for k in range(self.old_coords.shape[0]):
-                    #matched.append(newcoords[np.argmin(distance[k,:])])
                     ind = np.argmin(distance[k,:])
                     matched.append(newcoords[ind])
-                    distance[k,ind] = 10000
+                    distance[k,ind] = 100000
                 if len(self.old_coords)<len(newcoords):
                     for l in range(newcoords.shape[0]):
-                        if (np.max(distance[:,l])!=10000):
+                        if (np.max(distance[:,l])!=100000):
                         #if (np.min(distance[:,l])>50):
                             matched.append(newcoords[l])
                 self.old_coords = np.asarray(matched).reshape((newcoords.shape[0],1,2))
 
-            print("update\n", self.old_coords)
-            # draw the tracks
+            # visualization
             frame_show = new_frame.copy()
             for j in range(len(self.old_coords)):
                 a,b = self.old_coords[j][0][0], self.old_coords[j][0][1]
