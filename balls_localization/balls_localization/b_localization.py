@@ -1,6 +1,6 @@
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import Int32, Float32MultiArray
+from std_msgs.msg import Int32, Float32MultiArray, Int32MultiArray
 from sensor_msgs.msg import Image, CameraInfo
 
 
@@ -20,13 +20,13 @@ class b_localizer(Node):
     def __init__(self):
         super().__init__("b_localizer")
         self.balls_publisher = self.create_publisher(Float32MultiArray, "/balls_coords", 10)
-        self.ind_disappeared_publisher = self.create_publisher(Float32MultiArray, "/balls_disappeared", 10)
+        self.ind_disappeared_publisher = self.create_publisher(Int32MultiArray, "/balls_disappeared", 10)
         self.profile = qos_profile_sensor_data
         self.im_subscriber = self.create_subscription(Image, "/zenith_camera/image_raw", self.im_callback2, qos_profile=self.profile)
         
 
         self.ind_disappeared = []
-        self.visualize = False        
+        self.visualize = True        
         self.bridge = cv_bridge.CvBridge()
         self.old_image = None
         self.old_coords = None
@@ -163,12 +163,13 @@ class b_localizer(Node):
                         matched.append(newcoords[ind])
                         distance[k,ind] = 10000
                     else :
-                        matched.append(self.old_coords[0][k])
+                        matched.append(np.array([self.old_coords[k][0][0], self.old_coords[k][0][1]]))
+                        print("ind : ", ind)
                         self.ind_disappeared.append(ind)
+                        print("teeeeee : ", self.ind_disappeared)
                 self.old_coords = np.asarray(matched).reshape((self.old_coords.shape[0],1,2))
 
             coords = Float32MultiArray()
-            index_disappeared = Float32MultiArray()
             lst = []
             if self.visualize:
             # visualization
@@ -184,12 +185,16 @@ class b_localizer(Node):
                 coords.data = lst
                 self.balls_publisher.publish(coords)
 
-                index_disappeared.data = self.ind_disappeared
+                index_disappeared = Int32MultiArray()
+
+                print(self.ind_disappeared)
+                index_disappeared.data = [1,2,3]#self.ind_disappeared#.astype("int32")
                 self.ind_disappeared_publisher.publish(index_disappeared)
                 cv2.imshow("tracking", frame_show)
                 cv2.waitKey(1)
 
             else:
+                index_disappeared = Int32MultiArray()
                 for j in range(len(self.old_coords)):
                     WX = self.imgToWorld(self.old_coords[j][0][0], self.old_coords[j][0][1])
                     lst.append(WX[0])
