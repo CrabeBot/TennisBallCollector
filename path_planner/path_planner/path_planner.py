@@ -20,7 +20,7 @@ from scipy.spatial.distance import cdist
 from tf2_msgs.msg import TFMessage
 
 
-from shapely.geometry import Polygon, LineString, MultiPolygon
+from shapely.geometry import Polygon, LineString, MultiPolygon, Point
 
 DX, DY = 30, 35
 
@@ -77,23 +77,21 @@ class path_planner(Node):
             ]).buffer(self.l_rob)
 
     def compute_path(self, obj):
-        #self.path = LineString((self.pos, obj))
-        #print("ok")
+        
+        
         pts, d = self.rec_path(self.pos, obj, 0)
-        self.path = LineString(pts)
-        # for obs in self.obstacles:
-        #     if self.path.crosses(obs):
-        #         poly = Polygon((self.path.coords, obs.exterior.coords))
-        #         print(poly.exterior.coords)
+        if pts != None:
+            self.path = LineString(pts)
 
 
     def rec_path(self, A, B, d, sens=0):
-
-
+  
         # print("d : ", d)
         line = LineString((A, B))
         # if d>5:
         #     return (A, B), d
+        if not self.terrain.contains(line):
+            return None, 0
 
         for obs in self.obstacles:
             if line.crosses(obs):
@@ -104,17 +102,21 @@ class path_planner(Node):
                     C = coords[(i+sens)%len(list(coords))]
                     # print("C1, C2 : ", C1, C2)
                     pts, d0 = self.rec_path(C, B, d, sens=sens)
+                    if pts == None:
+                        return None, 0
                     d += d0
                 else:
                     C1, C2 = coords[i+1], coords[(i-2)%len(list(coords))]
-
+                    
                     # print("C1, C2 : ", C1, C2)
                     pts1, d1 = self.rec_path(C1, B, d, sens=1)
                     pts2, d2 = self.rec_path(C2, B, d, sens=-2)
-                    if d1 > d2:
+                    if d1 > d2 or pts1 == None:
                         C = C2
                         pts = pts2
                         d += d2
+                        if pts == None:
+                            return None, 0
                     else:
                         C = C1
                         pts = pts1
@@ -123,6 +125,7 @@ class path_planner(Node):
                 d += cdist(np.array(A).reshape(1, -1), np.array(C).reshape(1, -1))
                 pts.insert(0, A)
                 return pts, d
+
 
         d += cdist(np.array(A).reshape(1, -1), np.array(B).reshape(1, -1))
         return [A, B], d
@@ -164,8 +167,19 @@ class path_planner(Node):
             cv2.waitKey(1)
 
     def obj_callback(self, msg):
-        A = np.array((msg.x, msg.y)).reshape(1, -1)
-        self.compute_path((msg.x, msg.y))
+        A = (msg.x, msg.y)
+        # if not self.terrain.contains(Point(A)):
+        #     box = Point(A).buffer(self.l_rob)
+        #     self.compute_path(A)
+        #     if self.path != None:
+        #         I = self.terrain.exterior.intersection(box.exterior)
+        #         path = list(self.path.coords)
+        #         for B in I:
+        #             path.append(list(B.coords))
+        #         self.path = LineString(path)
+        # else:
+        #     self.compute_path(A)
+        self.compute_path(A)
 
 
 def main(args=None):
