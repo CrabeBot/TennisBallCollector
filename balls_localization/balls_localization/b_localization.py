@@ -20,10 +20,12 @@ class b_localizer(Node):
     def __init__(self):
         super().__init__("b_localizer")
         self.balls_publisher = self.create_publisher(Float32MultiArray, "/balls_coords", 10)
+        self.ind_disappeared_publisher = self.create_publisher(Float32MultiArray, "/balls_disappeared", 10)
         self.profile = qos_profile_sensor_data
         self.im_subscriber = self.create_subscription(Image, "/zenith_camera/image_raw", self.im_callback2, qos_profile=self.profile)
         
 
+        self.ind_disappeared = []
         self.visualize = False        
         self.bridge = cv_bridge.CvBridge()
         self.old_image = None
@@ -136,6 +138,7 @@ class b_localizer(Node):
             
             # Check for new balls
             newcoords = self.detectBalls2(new_frame)
+            # If any new : 
             if (newcoords.shape[0]>self.old_coords.shape[0]):
                 distance = distance_matrix(self.old_coords.reshape((-1,2)), newcoords)
                 matched = []
@@ -149,8 +152,23 @@ class b_localizer(Node):
                         #if (np.min(distance[:,l])>50):
                             matched.append(newcoords[l])
                 self.old_coords = np.asarray(matched).reshape((newcoords.shape[0],1,2))
-            
+            # If any loss :
+            else:
+                distance = distance_matrix(self.old_coords.reshape((-1,2)), newcoords)
+                matched = []
+                for k in range(self.old_coords.shape[0]):
+                    v = np.min(distance[k,:])
+                    ind = np.argmin(distance[k,:])
+                    if v<50:
+                        matched.append(newcoords[ind])
+                        distance[k,ind] = 10000
+                    else :
+                        matched.append(self.old_coords[0][k])
+                        self.ind_disappeared.append(ind)
+                self.old_coords = np.asarray(matched).reshape((self.old_coords.shape[0],1,2))
+
             coords = Float32MultiArray()
+            index_disappeared = Float32MultiArray()
             lst = []
             if self.visualize:
             # visualization
@@ -165,6 +183,9 @@ class b_localizer(Node):
                     frame_show = cv2.putText(frame_show, str(j), (int(a)+20,int(b)+20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,0,0), 2)
                 coords.data = lst
                 self.balls_publisher.publish(coords)
+
+                index_disappeared.data = self.ind_disappeared
+                self.ind_disappeared_publisher.publish(index_disappeared)
                 cv2.imshow("tracking", frame_show)
                 cv2.waitKey(1)
 
@@ -175,6 +196,9 @@ class b_localizer(Node):
                     lst.append(WX[1])
                 coords.data = lst
                 self.balls_publisher.publish(coords)
+                
+                index_disappeared.data = self.ind_disappeared
+                self.ind_disappeared_publisher.publish(index_disappeared)
                 #self.get_logger().info(f"Balles : {coords.data}\n")
 
 

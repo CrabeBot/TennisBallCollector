@@ -12,6 +12,8 @@ class test(Node):
     def __init__(self):
         super().__init__("test")
         self.balls_subscriber = self.create_subscription(Float32MultiArray, "/balls_coords", self.coords_callback, 10)
+        self.balls_subscriber = self.create_subscription(Float32MultiArray, "/balls_disappeared", self.disappeared_callback, 10)
+
         self.dico = {
             0:[],
             1:[],
@@ -33,6 +35,15 @@ class test(Node):
         self.get_logger().info(f"{n-1} balles trouvees")
         self.get_logger().info(f"{self.dico}")
         self.get_logger().info("======================================")
+
+    def disappeared_callback(self, msg):
+        index = msg.data
+        n = len(index)
+        for i in range(n):
+            self.dico[i] = [10000 , 10000]
+        #self.get_logger().info(f"{n-1} balles trouvees")
+        #self.get_logger().info(f"{self.dico}")
+        #self.get_logger().info("======================================")
 
 def main(args=None):
     rclpy.init(args=args)
