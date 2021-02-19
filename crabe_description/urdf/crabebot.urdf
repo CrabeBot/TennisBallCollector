@@ -410,6 +410,14 @@
         <limit upper="${h_murs}" lower="0" effort="2000" velocity="10"/>
     </joint>
 
+    <joint name="body_front_door" type="prismatic">
+        <origin xyz="${l_body/2 + e_murs/2} 0 -${h_body/2+h_murs/2}" rpy="0 0 ${pi/2}"/>
+        <parent link="body"/>
+        <child link="Front_door"/>
+        <axis xyz="0 0 1"/>
+        <limit upper="${h_murs}" lower="0" effort="2000" velocity="10"/>
+    </joint>
+    
     <gazebo>
         <plugin name="joint_states" filename="libgazebo_ros_joint_state_publisher.so">
             <joint_name>Body_R_wheel</joint_name>
