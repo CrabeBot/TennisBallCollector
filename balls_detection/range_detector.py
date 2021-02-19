@@ -32,7 +32,7 @@ hMin = sMin = vMin = hMax = sMax = vMax = 0
 phMin = psMin = pvMin = phMax = psMax = pvMax = 0
 
 # Output Image to display
-img = cv2.imread("./balls/image_ball_1.png")
+img = cv2.imread("./balls/image_ball_0.png")
 scale_percent = 80
 #calculate the 50 percent of original dimensions
 width = int(img.shape[1] * scale_percent / 100)

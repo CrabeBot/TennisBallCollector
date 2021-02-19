@@ -5,8 +5,6 @@ from sensor_msgs.msg import Image, CameraInfo
 
 
 from rclpy.qos import qos_profile_sensor_data
-import rclpy
-from rclpy.node import Node
 import tf2_py
 
 import tf2_ros
@@ -17,20 +15,16 @@ import cv2
 import cv_bridge
 from scipy.spatial import distance_matrix
 
-from tf2_msgs.msg import TFMessage
-
 
 class b_localizer(Node):
     def __init__(self):
         super().__init__("b_localizer")
+        self.balls_publisher = self.create_publisher(Float32MultiArray, "/balls_coords", 10)
         self.profile = qos_profile_sensor_data
         self.im_subscriber = self.create_subscription(Image, "/zenith_camera/image_raw", self.im_callback2, qos_profile=self.profile)
+        
 
-        self.balls_publisher = self.create_publisher(Float32MultiArray, "/balls_coods", 10)
-        #self.br = tf2_ros.TransformBroadcaster(self)
-        #self.tf_publisher = self.create_publisher(msg_type=TFMessage, topic="/tf", qos_profile=self.profile)
-        
-        
+        self.visualize = False        
         self.bridge = cv_bridge.CvBridge()
         self.old_image = None
         self.old_coords = None
@@ -58,7 +52,7 @@ class b_localizer(Node):
         # filtre
         # use the range_detector.py to find the values of lower and upper thresholds
         lower = np.array([20, 90, 90], dtype="uint8")
-        upper = np.array([60, 255, 255], dtype="uint8")
+        upper = np.array([30, 255, 255], dtype="uint8")
         mask = cv2.inRange(hsv, lower, upper)
 
         # some operations on the mask to remove small blobs 
@@ -112,7 +106,7 @@ class b_localizer(Node):
                 # draw the center of the circle
                 cv2.circle(img, (cx,cy), 2, (0,0,255), 3)
             #print("Nombre de balles trouvés : ", len(ballsCoords))
-            self.get_logger().info(f"Nombre de balles trouvés : {len(ballsCoords)}\n")
+            #self.get_logger().info(f"Nombre de balles trouvés : {len(ballsCoords)}\n")
             #self.get_logger().info(f"Ball  spawned")
         else:
             #print("No circle found")
@@ -156,30 +150,32 @@ class b_localizer(Node):
                             matched.append(newcoords[l])
                 self.old_coords = np.asarray(matched).reshape((newcoords.shape[0],1,2))
             
-            #for j in range(len(self.old_coords)):
-                #WX = self.imgToWorld(self.old_coords[j][0][0], self.old_coords[j][0][1])
-                #print("Ball : ", j, " ---->", WX)
-            # visualization
             coords = Float32MultiArray()
             lst = []
-            frame_show = new_frame.copy()
-            for j in range(len(self.old_coords)):
-                a,b = self.old_coords[j][0][0], self.old_coords[j][0][1]
-                WX = self.imgToWorld(a, b)
-                lst.append(WX[0])
-                lst.append(WX[1])
-                #print("Ball : ", j, " ---->", WX)
-                frame_show = cv2.circle(frame_show, (a,b), 5, (0,200,0), -1)
-                frame_show = cv2.putText(frame_show, str(j), (int(a)+20,int(b)+20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,0,0), 2)
-            #print("=================================================================")
-            
-            #print("list : ", lst)
-            coords.data = lst
-            self.balls_publisher.publish(coords)
-            cv2.imshow("tracking", frame_show)
-            cv2.waitKey(1)
+            if self.visualize:
+            # visualization
+                frame_show = new_frame.copy()
+                for j in range(len(self.old_coords)):
+                    a,b = self.old_coords[j][0][0], self.old_coords[j][0][1]
+                    WX = self.imgToWorld(a, b)
+                    lst.append(WX[0])
+                    lst.append(WX[1])
+                    #print("Ball : ", j, " ---->", WX)
+                    frame_show = cv2.circle(frame_show, (a,b), 5, (0,200,0), -1)
+                    frame_show = cv2.putText(frame_show, str(j), (int(a)+20,int(b)+20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,0,0), 2)
+                coords.data = lst
+                self.balls_publisher.publish(coords)
+                cv2.imshow("tracking", frame_show)
+                cv2.waitKey(1)
 
-            
+            else:
+                for j in range(len(self.old_coords)):
+                    WX = self.imgToWorld(self.old_coords[j][0][0], self.old_coords[j][0][1])
+                    lst.append(WX[0])
+                    lst.append(WX[1])
+                coords.data = lst
+                self.balls_publisher.publish(coords)
+                #self.get_logger().info(f"Balles : {coords.data}\n")
 
 
 def main(args=None):
