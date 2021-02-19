@@ -4,7 +4,7 @@ from rclpy.duration import Duration
 import tf2_ros
 import numpy as np
 import geometry_msgs
-from geometry_msgs.msg import Quaternion, Twist
+from geometry_msgs.msg import Quaternion, Twist, Point
 from rclpy.qos import qos_profile_system_default
 
 from numpy import cos, sin, arctan, arctan2, pi, cross, hstack, array, log, sign
@@ -19,6 +19,8 @@ class calibration(Node):
         self.listener = tf2_ros.TransformListener(self.tfBuffer, self)
 
         self.pub_cmd = self.create_publisher(Twist, "/cmd_vel", qos_profile_system_default)
+        self.create_subscription(Point, "/pointA", self.getA)
+        self.create_subscription(Point, "/pointB", self.getB)
 
         self.a = np.array([[-3.5, 13]]).T
         self.b = np.array([[5, 13]]).T
@@ -29,6 +31,13 @@ class calibration(Node):
 
     def sawtooth(self, x):
         return (x+pi) % (2*pi)-pi
+
+    def getA(self, msg):
+        self.a = np.array([[msg.x, msg.y]]).T
+    
+    def getB(self, msg):
+        self.b = np.array([[msg.x, msg.y]]).T
+
 
     def control(self, x, y, yaw, a, b):
         r = .5
