@@ -1,7 +1,8 @@
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import Int32
+from std_msgs.msg import Int32, Float32MultiArray
 from sensor_msgs.msg import Image, CameraInfo
+
 
 from rclpy.qos import qos_profile_sensor_data
 import rclpy
@@ -25,8 +26,11 @@ class b_localizer(Node):
         self.profile = qos_profile_sensor_data
         self.im_subscriber = self.create_subscription(Image, "/zenith_camera/image_raw", self.im_callback2, qos_profile=self.profile)
 
-        self.br = tf2_ros.TransformBroadcaster(self)
+        self.balls_publisher = self.create_publisher(Float32MultiArray, "/balls_coods", 10)
+        #self.br = tf2_ros.TransformBroadcaster(self)
         #self.tf_publisher = self.create_publisher(msg_type=TFMessage, topic="/tf", qos_profile=self.profile)
+        
+        
         self.bridge = cv_bridge.CvBridge()
         self.old_image = None
         self.old_coords = None
@@ -37,29 +41,17 @@ class b_localizer(Node):
                             maxLevel = 10,
                             criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
 
+        self.im_width = 1280
+        self.im_height = 720
     
-    def rpy2Quaternion(self, roll, pitch, yaw):
-        # Abbreviations for the various angular functions
-        cy = np.cos(yaw * 0.5)
-        sy = np.sin(yaw * 0.5)
-        cp = np.cos(pitch * 0.5)
-        sp = np.sin(pitch * 0.5)
-        cr = np.cos(roll * 0.5)
-        sr = np.sin(roll * 0.5)
-
-        q = Quaternion()
-        q.w = cr * cp * cy + sr * sp * sy
-        q.x = sr * cp * cy - cr * sp * sy
-        q.y = cr * sp * cy + sr * cp * sy
-        q.z = cr * cp * sy - sr * sp * cy
-
-        return q
-
-    def imgCoordToTF(self, ix, iy):
-        return (
-            -0.02392*ix + 8.56684846, 
-            (iy-639.98)/(-41.842)
-            )
+    def imgToWorld(self, px, py):
+        u = px - self.im_width/2
+        v = py - self.im_height/2
+        x = -v
+        y = -u
+        wx = x*0.025
+        wy = y*0.025
+        return np.array([wx, wy])
 
     def buildMask(self, img):
         hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
@@ -163,15 +155,31 @@ class b_localizer(Node):
                         #if (np.min(distance[:,l])>50):
                             matched.append(newcoords[l])
                 self.old_coords = np.asarray(matched).reshape((newcoords.shape[0],1,2))
-
+            
+            #for j in range(len(self.old_coords)):
+                #WX = self.imgToWorld(self.old_coords[j][0][0], self.old_coords[j][0][1])
+                #print("Ball : ", j, " ---->", WX)
             # visualization
+            coords = Float32MultiArray()
+            lst = []
             frame_show = new_frame.copy()
             for j in range(len(self.old_coords)):
                 a,b = self.old_coords[j][0][0], self.old_coords[j][0][1]
+                WX = self.imgToWorld(a, b)
+                lst.append(WX[0])
+                lst.append(WX[1])
+                #print("Ball : ", j, " ---->", WX)
                 frame_show = cv2.circle(frame_show, (a,b), 5, (0,200,0), -1)
                 frame_show = cv2.putText(frame_show, str(j), (int(a)+20,int(b)+20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,0,0), 2)
+            #print("=================================================================")
+            
+            #print("list : ", lst)
+            coords.data = lst
+            self.balls_publisher.publish(coords)
             cv2.imshow("tracking", frame_show)
             cv2.waitKey(1)
+
+            
 
 
 def main(args=None):
