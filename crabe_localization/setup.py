@@ -1,6 +1,6 @@
 from setuptools import setup
 
-package_name = 'CRAB'
+package_name = 'crabe_localization'
 
 setup(
     name=package_name,
@@ -10,17 +10,20 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
+        ('share/' + package_name, ['launch/calibration.launch.py']),
+        ('share/' + package_name, ['launch/localization.launch.py']),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
     maintainer='user',
-    maintainer_email='hamid.hacene@ensta-bretagne.org',
+    maintainer_email='corentin.lemoine@ensta-bretagne.org',
     description='TODO: Package description',
     license='TODO: License declaration',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            "saver = image_saver.save_image:main",
+            "localizer = crabe_localization.localization:main",
+            "calibration = crabe_localization.calibration:main",
         ],
     },
 )

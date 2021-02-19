@@ -6,7 +6,7 @@ def generate_launch_description():
     ld = LaunchDescription()
 
     loc_node = Node(
-        package='CRAB_localization',
+        package='crabe_localization',
         executable='localizer',
     )
 
