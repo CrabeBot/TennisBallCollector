@@ -170,15 +170,15 @@ class b_localizer(Node):
                     else :
                         #matched.append(self.old_coords[0][k])
                         zebbi = 1                        
-                print("dis : ", dis)
-                print("============")
+                #print("dis : ", dis)
+                #print("============")
                 #self.old_coords = np.asarray(matched).reshape((self.old_coords.shape[0],1,2))
                 #print("self.old_coords : ", self.old_coords)
                 for j in range(len(self.balls)):
                     #self.balls[j].coords = [self.old_coords[j][0][0], self.old_coords[j][0][1]]
                     if (j in dis):
                         for b in self.balls:
-                            print("ball ", b.num, " : ", b.coords[0], ", ", b.coords[1])
+                            #print("ball ", b.num, " : ", b.coords[0], ", ", b.coords[1])
                             if (b.num==j):
                                 x, y = self.old_coords[j][0][0], self.old_coords[j][0][1]
                                 self.balls[j].coords = [x, y]
@@ -210,7 +210,7 @@ class b_localizer(Node):
             lst_coords.data = [1.0, 2.0, 3.0]
             #print("lst : ", lst)
             lst_coords.data = lst
-            print("lst_coords.data : ", len(lst_coords.data))
+            #print("lst_coords.data : ", len(lst_coords.data))
             self.balls_publisher.publish(lst_coords)
 
 
