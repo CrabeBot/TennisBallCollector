@@ -22,7 +22,6 @@ setup(
     entry_points={
         'console_scripts': [
             "b_localizer = balls_localization.b_localization:main",
-            "test = balls_localization.test:main"
         ],
     },
 )

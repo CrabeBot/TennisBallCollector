@@ -1,6 +1,6 @@
-# Tennis Court
+# balls_localization
 
-Package ROS 2 pour la détectioin et localisation des balles.
+Ce package contient le nécessaire pour localiser les balles à l'aide de la caméra zénithale. Les coordonées de celles-ci sont publiées selon leurs ordre d'apparition (ou presque !). Il permet de tracker les balles, de gérer le cas des balles disparus et des nouvelles balles qui apparaissent.
 
 
 ## Fonctionnalités
@@ -19,33 +19,42 @@ Lancer le fichier:
 ros2 launch tennis_court tennis_court.launch.py
 ```
 
-Inclure le fichier:
+- Insérer la ligne suivante dans un fichier launch:
 ```python
-def generate_launch_description():
-    tennis_court_share = get_package_share_directory("tennis_court")
-    tennis_court_launch_file = os.path.join(tennis_court_share, "launch", "tennis_court.launch.py")
-    tennis_court_launch = IncludeLaunchDescription(
-      PythonLaunchDescriptionSource(tennis_court_launch_file)
+ball_tracking = Node(
+        package="balls_localization",
+        #condition=IfCondition(LaunchConfiguration("manager")),
+        #parameters=[{"use_sim_time": True}],
+        output="screen",
+        #emulate_tty=True,
+        executable="b_localizer"
     )
-    return LaunchDescription([tennis_court_launch])
 ```
 
-- Lancer le noued de détection : 
+- Ou bien lancer le noued : 
 
 Lancer le fichier:
 ```shell
-ros2 launch balls_localization ball_tracking.launch.py
+ros2 run balls_localization b_localizer
 ```
+
 
 ### Nœuds
 
-- `b_localization.py (localizer)`  
+***b_localization.py (b_localizer)***  
+
 
 ### Topics
 
-- `/balls_xy` (*MultiArray ?*)  
-  Liste des balles.
+| topics publiés  |  type |
+|---|---|
+| /balls_coords  | std_msgs::Float32MultiArray  |
+
+| topics souscrits  |  type |
+|---|---|
+| /zenith_image  | sensor_msgs::Image  |
+
 
 ### Paramètres
-
+- Possibilité de visualiser les traitements (variable self.visualize à modifier dans le code source).
 
