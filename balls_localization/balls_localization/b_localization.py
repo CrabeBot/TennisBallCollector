@@ -31,11 +31,11 @@ class Balle(object):
 class b_localizer(Node):
     def __init__(self):
         super().__init__("b_localizer")
-        self.balls_publisher = self.create_publisher(Float32MultiArray, "/balls_coords", qos_profile=qos_profile_sensor_data)
+        self.balls_publisher = self.create_publisher(Float32MultiArray, "/balls_coords", 10)
         self.profile = qos_profile_sensor_data
         self.im_subscriber = self.create_subscription(Image, "/zenith_camera/image_raw", self.im_callback, qos_profile=self.profile)
         
-        self.visualize = False
+        self.visualize = True
         self.bridge = cv_bridge.CvBridge()
         
         self.first_spin = True
@@ -140,10 +140,13 @@ class b_localizer(Node):
                     ind = np.argmin(distance[k,:])
                     matched.append(newcoords[ind])
                     distance[k,ind] = 100000
-                if len(self.old_coords)<len(newcoords):
+                if (newcoords.shape[0]>self.old_coords.shape[0]):
                     for l in range(newcoords.shape[0]):
                         if (np.max(distance[:,l])!=100000):
                             matched.append(newcoords[l])
+                #print("nc : ", newcoords.shape[0])
+                #print("nc : ", self.old_coords.shape[0])
+                #print("mtchd : ", len(matched))
                 self.old_coords = np.asarray(matched).reshape((newcoords.shape[0],1,2))
             
             # Create Balles Objects

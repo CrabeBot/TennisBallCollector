@@ -24,7 +24,7 @@ class Crabe():
         self.pubPointB = node.create_publisher(Point, "/pointB", qos_profile_services_default)
         self.pubTarget = node.create_publisher(Point, "/target", qos_profile_services_default)
 
-        node.create_subscription(Float32MultiArray, "/balls_coords", self.__balls_callback, qos_profile_sensor_data)
+        node.create_subscription(Float32MultiArray, "/balls_coords", self.__balls_callback, 10)
         node.create_subscription(Float64MultiArray, "/waypoints", self.__wp_callback, qos_profile_sensor_data)
 
 
@@ -34,6 +34,7 @@ class Crabe():
         for i in range(len(lst)//3):
             ind = 3*i
             self.balls[int(lst[ind])] = (lst[ind+1], lst[ind+2])
+        self.node.get_logger('fsm').info(f"Balls : {self.balls}")
 
     def __wp_callback(self, msg):
         wpData = msg.data
