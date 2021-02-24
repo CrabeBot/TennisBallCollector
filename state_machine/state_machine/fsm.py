@@ -6,7 +6,7 @@ from rclpy.node import Node
 from rclpy.timer import Rate
 import numpy as np
 
-from crabe import Crabe
+from state_machine.crabe import Crabe
 
 class CrabeBotFSM(Node):
 
@@ -35,7 +35,7 @@ class CrabeBotFSM(Node):
         self.A = [0, 0]
         self.B = [0, 0]
         self.closest_area = 1 # 1 ou 2
-        self.pos_balls = [] # liste des positions des balles (liste de tuples (x,y))
+        self.pos_balls = [None, None, None, None, None, None, None, None, None, None] # liste des positions des balles (liste de tuples (x,y))
 
         # Initialisation de la machine à états
         self.machine = Machine(model=self, states=CrabeBotFSM.states, initial='asleep')
@@ -137,7 +137,7 @@ class CrabeBotFSM(Node):
             rate.sleep()
 
             # Si la position du robot est égale à la position de la balle à un epsilon près, on considère qu'ils ont la même position
-            if (self.closest_ball[0][0] - eps < self.crabe.getPos()[0][0] < self.closest_ball[0][0] + eps) and (self.closest_ball[0][1] - eps < self.crabe.getPos()[0][1] < self.closest_ball[0][1] + eps)
+            if (self.closest_ball[0][0] - eps < self.crabe.getPos()[0][0] < self.closest_ball[0][0] + eps) and (self.closest_ball[0][1] - eps < self.crabe.getPos()[0][1] < self.closest_ball[0][1] + eps) :
                 same_pos = True
                 self.crabe.openFrontDoor()
 
@@ -286,7 +286,7 @@ class CrabeBotFSM(Node):
         if area_number == 1 :
             target[0][0] = -14
             target[0][1] = -7
-        else if area_number == 2 :
+        elif area_number == 2 :
             target[0][0] = 14
             target[0][1] = 7
 
@@ -303,7 +303,7 @@ class CrabeBotFSM(Node):
         if area_number == 1 :
             target[0][0] = -13
             target[0][1] = 0
-        else if area_number == 2 :
+        elif area_number == 2 :
             target[0][0] = 13
             target[0][1] = 0
 
