@@ -12,17 +12,17 @@ from numpy import cos, sin, arctan, arctan2, pi, cross, hstack, array, log, sign
 from numpy.linalg import det, norm
 
 
-class calibration(Node):
+class controller(Node):
     def __init__(self):
-        super().__init__("calibration")
+        super().__init__("controller")
 
         self.tfBuffer = tf2_ros.Buffer()
         self.listener = tf2_ros.TransformListener(self.tfBuffer, self)
 
         self.pub_cmd = self.create_publisher(Twist, "/cmd_vel", qos_profile_system_default)
-        self.create_subscription(Point, "/pointA", self.getA)
-        self.create_subscription(Point, "/pointB", self.getB)
-        self.create_subscription(Float32, "/vel", self.getVel)
+        self.create_subscription(Point, "/pointA", self.getA, qos_profile_system_default)
+        self.create_subscription(Point, "/pointB", self.getB, qos_profile_system_default)
+        self.create_subscription(Float32, "/vel", self.getVel, qos_profile_system_default)
 
         self.a = np.array([[-3.5, 13]]).T
         self.b = np.array([[5, 13]]).T
@@ -71,7 +71,7 @@ class calibration(Node):
 
             m = Twist()
             m.angular.z = u
-            m.linear.x = self.vel
+            m.linear.x = float(self.vel)
 
             self.pub_cmd.publish(m)
 
@@ -83,7 +83,7 @@ class calibration(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    node = calibration()
+    node = controller()
     
     rclpy.spin(node)
 

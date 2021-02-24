@@ -31,7 +31,7 @@ class Balle(object):
 class b_localizer(Node):
     def __init__(self):
         super().__init__("b_localizer")
-        self.balls_publisher = self.create_publisher(Float32MultiArray, "/balls_coords", 10)
+        self.balls_publisher = self.create_publisher(Float32MultiArray, "/balls_coords", qos_profile=qos_profile_sensor_data)
         self.profile = qos_profile_sensor_data
         self.im_subscriber = self.create_subscription(Image, "/zenith_camera/image_raw", self.im_callback, qos_profile=self.profile)
         
