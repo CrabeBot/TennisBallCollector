@@ -128,19 +128,18 @@ class CrabeBotFSM(Node):
                     self.waitingFirstPath = False
 
             else :
-                self.get_logger().info(str(self.crabe.getBalls()[self.closest_ball_index]))                     
                 if self.isCatched(0.1):
-                    self.get_logger().info("Not catched")
                     self.target = self.crabe.getBalls()[self.closest_ball_index] # Cible à atteindre
                     self.crabe.setTarget(self.target) # Envoi du point à atteindre au path_planner
                     if self.crabe.newWaypoints :
                         self.waypoint_index = 0
                         self.waypoints = self.crabe.getWaypoints() # Récupération de la liste de waypoints calculés par le path_planner
                         self.compute_next_line()
+                        self.crabe.setLine(self.A, self.B)
 
                     self.crabe.setSpeed(float(.8))
                     m = np.array(self.crabe.getPos())
-                    self.get_logger().info(str(self.A)+ str(self.B))
+                    self.get_logger().info(str(np.dot(self.B - self.A, m - self.B)))
                     if np.dot(self.B - self.A, m - self.B) > 0.0 : # Waypoint validé, on passe au suivant
                         self.compute_next_line() # Calcul de A et de B
                         self.crabe.setLine(self.A, self.B) # Envoi de ligne au contrôleur
@@ -183,6 +182,7 @@ class CrabeBotFSM(Node):
         self.waypoints = self.crabe.getWaypoints() # Récupération de la liste de waypoints calculés par le path_planner
         
         self.crabe.setSpeed(float(0))
+        self.crabe.closeBackDoor()
         
         self.waitingFirstPath = True
 
