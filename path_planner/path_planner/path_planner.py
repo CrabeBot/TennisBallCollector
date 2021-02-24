@@ -205,7 +205,7 @@ class path_planner(Node):
             if len(I.geoms) == 2:
                 B = I.geoms[0]
                 C = I.geoms[1]
-                if cdist(np.array(A).reshape(1, -1), np.array(B).reshape(1, -1)) > cdist(np.array(A).reshape(1, -1), np.array(C).reshape(1, -1)):
+                if cdist(np.array(self.pos).reshape(1, -1), np.array(B).reshape(1, -1)) > cdist(np.array(self.pos).reshape(1, -1), np.array(C).reshape(1, -1)):
                     B, C = C, B
                 
                 pts, d1 = self.rec_path(self.pos, B, 0)
