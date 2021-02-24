@@ -2,7 +2,7 @@ import tf2_ros
 import numpy as np
 import rclpy
 from rclpy.node import Node
-from geometry_msgs.msg import Wrench, Point
+from geometry_msgs.msg import Wrench, Point, Pose2D
 from std_msgs.msg import Float32, Float32MultiArray, Float64MultiArray
 from rclpy.qos import qos_profile_services_default, qos_profile_sensor_data
 
@@ -22,10 +22,11 @@ class Crabe():
         self.pubVel = node.create_publisher(Float32, "/vel", qos_profile_services_default)
         self.pubPointA = node.create_publisher(Point, "/pointA", qos_profile_services_default)
         self.pubPointB = node.create_publisher(Point, "/pointB", qos_profile_services_default)
-        self.pubTarget = node.create_publisher(Point, "/target", qos_profile_services_default)
+        self.pubTarget = node.create_publisher(Pose2D, "/objectif", qos_profile_services_default)
 
         node.create_subscription(Float32MultiArray, "/balls_coords", self.__balls_callback, 10)
         node.create_subscription(Float64MultiArray, "/waypoints", self.__wp_callback, qos_profile_sensor_data)
+        self.newWaypoints = False
 
 
     def __balls_callback(self, msg):
@@ -34,15 +35,16 @@ class Crabe():
         for i in range(len(lst)//3):
             ind = 3*i
             self.balls[int(lst[ind])] = (lst[ind+1], lst[ind+2])
-        self.node.get_logger('fsm').info(f"Balls : {self.balls}")
+        #self.node.get_logger().info(f"Balls : {self.balls}")
 
     def __wp_callback(self, msg):
-        wpData = msg.data
+        wpData =np.array(msg.data)
         self.waypoints = wpData.reshape((-1,2))
+        self.newWaypoints = True
 
     def getPos(self):
         transform  = self.tfBuffer.lookup_transform('odom', 'base_link', tf2_ros.Time())
-        return np.array([transform.translation.x, transform.translation.y])
+        return np.array([transform.transform.translation.x, transform.transform.translation.y])
 
     def getTheta(self):
         transform  = self.tfBuffer.lookup_transform('odom', 'base_link', tf2_ros.Time())
@@ -77,15 +79,15 @@ class Crabe():
 
     def setLine(self, A, B):
         m = Point()
-        m.x = A[0]
-        m.y = A[1]
-        self.pubPointA(m)
-        m.x = B[0]
-        m.y = B[1]
-        self.pubPointB(m)
+        m.x = float(A[0])
+        m.y = float(A[1])
+        self.pubPointA.publish(m)
+        m.x = float(B[0])
+        m.y = float(B[1])
+        self.pubPointB.publish(m)
         
     def setTarget(self, target):
-        m = Point()
+        m = Pose2D()
         x0, y0 = target
         m.x = x0
         m.y = y0
