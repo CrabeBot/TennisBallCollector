@@ -1,6 +1,6 @@
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import Int32, Float32MultiArray
+from std_msgs.msg import Int32, Float32MultiArray, Int32MultiArray
 from sensor_msgs.msg import Image, CameraInfo
 
 from rclpy.qos import qos_profile_sensor_data
