@@ -3,12 +3,8 @@
 from transitions import Machine, State
 import rclpy
 from rclpy.node import Node
-from rclpy.qos import ReliabilityPolicy, QoSProfile
+from rclpy.timer import Rate
 import numpy as np
-
-from geometry_msgs.msg import Pose
-from geometry_msgs.msg import Wrench
-from std_msgs.msg import Float32MultiArray
 
 from crabe import Crabe
 
@@ -17,7 +13,7 @@ class CrabeBotFSM(Node):
     # Définition des différents états et de leurs callback_functions
     states = [State(name='asleep', on_enter=['state0_enter_callback']),
             State(name='waiting', on_enter=['state1_enter_callback']),
-            State(name='moving to a ball', on_enter=['state2_enter_callback'], on_exit=['state2_exit_callback']),
+            State(name='moving to a ball', on_enter=['state2_enter_callback']),
             State(name='moving to discharge area', on_enter=['state3_enter_callback']),
             State(name='dropping balls', on_enter=['state4_enter_callback'])
     ]
@@ -30,15 +26,14 @@ class CrabeBotFSM(Node):
 
         self.get_logger().info("INITIALISATION OK")
 
-        #self.balls_pos_subscriber = self.create_subscription(Float32MultiArray, '/balls_pos', self._callback_balls_pos, QoSProfile(depth=10, reliability=ReliabilityPolicy.BEST_EFFORT)) # À CORRIGER EN FONCTION DU TOPIC ET DU MSG
-        #self.rob_pos_subscriber = self.create_subscription(Pose, '/rob_pos', self._callback_rob_pos, QoSProfile(depth=10, reliability=ReliabilityPolicy.BEST_EFFORT)) # À CORRIGER EN FONCTION DU TOPIC ET DU MSG
-        #self.closest_ball_publisher = self.create_publisher(Pose, '/closest_ball', 10) # À CORRIGER EN FONCTION DU TOPIC ET DU MSG
-        #self.force_avant_publisher = self.create_publisher(Wrench, '/force_porte_avant', 10) # À CORRIGER EN FONCTION DU TOPIC ET DU MSG
-        #self.force_arriere_publisher = self.create_publisher(Wrench, '/force_porte_arriere', 10) # À CORRIGER EN FONCTION DU TOPIC ET DU MSG
-
         # On initialise le nombre de balles collectées dans le réservoir et la position de la balle la plus proche
         self.nb_collected_balls = 0
-        self.closest_ball = Pose()
+        self.nb_tot = 0
+        self.closest_ball = np.zeros((1,2))
+        self.waypoints = []
+        self.A, self.B = np.zeros((1,2)), np.zeros((1,2))
+        self.closest_area = 1 # 1 ou 2
+
 
         # Initialisation de la machine à états
         self.machine = Machine(model=self, states=CrabeBotFSM.states, initial='asleep')
@@ -60,12 +55,6 @@ class CrabeBotFSM(Node):
         self.machine.add_transition(trigger='ball_collected', source='moving to a ball', dest='waiting', conditions=['nb_balls_ok'])
 
 
-        # [State 2 --> State 2] : Se dirige vers la balle la plus proche --> Se dirige vers la balle la plus proche
-        # REFLEXIVE TRANSITION
-        # Condition de passage : une balle encore plus proche a été détectée
-        self.machine.add_transition(trigger='closer_ball_detected', source='moving to a ball', dest='=')
-
-
         # [State 2 --> State 3] : Se dirige vers la balle la plus proche --> Se dirige vers la zone de décharge la plus proche
         # Condition de passage : une balle a été ramassée et le nombre de balles dans le réservoir est égal à 4
         self.machine.add_transition(trigger='ball_collected', source='moving to a ball', dest='moving to discharge area', conditions=['nb_balls_max'])
@@ -83,109 +72,231 @@ class CrabeBotFSM(Node):
         # ------------------------------------------------------------------------------------------------------------------------
 
 
-
-    # FONCTIONS DE CALLBACK DES TOPICS ROS
-    # ------------------------------------------------------------------------------------------------------------------------
-    def _callback_balls_pos(self, msg):     
-        self.list_balls = msg
-
-
-    def _callback_rob_pos(self, msg):
-        self.pos_rob = msg
-        
-        # À COMPLÉTER
-        # If self.state == 3 and pos_rob est dans la zone de décharge :
-        # Appeler le trigger de l'état3 vers l'état4 : self.is_in_discharge_area()
-        # Else if self.state == 4 and pos_rob est en dehors de la zone de décharge :
-        # Appeler le trigger de l'état4 vers l'état1 : self.not_in_discharge_area()
-    # ------------------------------------------------------------------------------------------------------------------------
-
-
-
     # FONCTIONS DE CALLBACK À L'INTÉRIEUR DES STATES
     # ------------------------------------------------------------------------------------------------------------------------
 
     def state0_enter_callback(self):
+        # ÉTAT INITIAL - LANCEMENT DE LA SIMULATION
         # Lorsque l'on entre dans l'état 0, on appelle directement la fonction 'wake_up' qui va trigger le state1
         self.get_logger().info("I'm in state 0 !")
         self.wake_up()
     
 
     def state1_enter_callback(self):
+        # LE ROBOT EST EN ATTENTE DE BALLES À COLLECTER
         # On lit la liste des positions des balles sur le topic correspondant
         # Tant que la liste des balles est vide, on dort !
         # Si la liste n'est pas vide, 
         # on lit la position du robot et on calcule la position de la balle la plus proche
-        # puis on trigger le state2 en lançant self.ball_detected()
+        # On envoie l'information au path planner qui calcule et renvoie une liste de waypoints
+        # Puis on trigger le state2 en lançant self.ball_detected()
 
         self.get_logger().info("I'm in state 1 !")
 
         while len(self.crabe.getBalls()) == 0:
-            # AJOUTER LIGNE DE CODE POUR SLEEP UN PETIT PEU
+            rate = Rate(2)
+            rate.sleep()
 
-        self.closest_ball = compute_closest_ball(self.crabe.getPos(), self.crabe.getBalls())
-        #self.closest_ball_publisher.publish(Pose(closest_ball)) # On publie sur le topic lu par le path_planner
         self.ball_detected()
 
     
     def state2_enter_callback(self):
-        # On lit la liste des positions des balles
-        # Si on détecte une nouvelle balle plus proche que celle qu'on allait chercher, 
-        # on trigger à nouveau le state2 en lançant self.closer_ball_detected()
-        # Sinon on trigger le state3 ou le state1 avec self.ball_collected() et l'un ou l'autre se réalisera en fonction
-        # de la condition
+        # UNE BALLE A ÉTÉ DÉTECTÉE ET LE ROBOT SE DIRIGE VERS CELLE-CI
+        # Tant que la balle n'a pas été ramassée, le robot se dirige vers sa cible (la balle la plus proche)
+        # Une fois que la balle a été ramassée, on update le nombre de balles collectées avec la fonction self.update_nb_balls()
+        # puis on trigger le state3 ou le state1 avec self.ball_collected()
+        # et l'un ou l'autre se réalisera en fonction de la condition sur le nombre de balles collectées
 
         self.get_logger().info("I'm in state 2 !")
 
-        closest_ball_new = self.compute_closest_ball(self.crabe.getPos(), self.crabe.getBalls())
-        if closest_ball_new != self.closest_ball :
-            self.closer_ball_detected()
-        
-        # TROUVER UN MOYEN POUR RESTER (OU BOUCLER) SUR LE STATE 2 TANT QUE LA BALLE N'EST PAS COLLECTÉE
-        # À COMPLÉTER
+        same_pos = False
+        eps = 0.1
 
+        # On calcule la trajectoire une seule fois : pas de changement de cible en cours de route
+        self.closest_ball = compute_closest_ball(self.crabe.getPos(), self.crabe.getBalls())
+        self.target = self.closest_ball # Cible à atteindre
+        self.crabe.setTarget(self.target) # Envoi du point à atteindre au path_planner
+        rate = Rate(2)
+        rate.sleep() # On dort un peu le temps que la trajectoire soit calculée
+        self.waypoints = self.crabe.getWaypoints() # Récupération de la liste de waypoints calculés par le path_planner
 
+        while (same_pos == False | self.crabe.isCatched() == False):
 
-    def state2_exit_callback(self):
-        # Update le nombre de balles collectées avec la fonction self.update_nb_balls() quand on passe à
-        # l'état 1 ou 3 (mais par contre il ne faut pas qu'elle se lance quand on boucle sur l'état2)
+            self.A, self.B = compute_next_line(self.waypoints) # Calcul de A et de B
+            self.crabe.setLine(self.A, self.B) # Envoi de ligne au contrôleur
+            self.crabe.setSpeed(2)
 
-        # FONCTION À COMPLÉTER
-        self.get_logger().info("I leave state 2 !")
-    
+            rate = Rate(2)
+            rate.sleep()
+
+            # Si la position du robot est égale à la position de la balle à un epsilon près, on considère qu'ils ont la même position
+            if (self.closest_ball[0][0] - eps < self.crabe.getPos()[0][0] < self.closest_ball[0][0] + eps) and (self.closest_ball[0][1] - eps < self.crabe.getPos()[0][1] < self.closest_ball[0][1] + eps)
+                same_pos = True
+                self.crabe.openFrontDoor()
+
+        # On sort de la boucle une fois que la balle cible a été collectée
+        self.crabe.setSpeed(0)
+        self.nb_collected_balls += 1
+        self.nb_tot += 1
+        print(self.nb_collected_balls)
+        print(self.nb_tot)
+        self.crabe.closeFrontDoor()
+        self.ball_collected()
+
 
     def state3_enter_callback(self):
+        # LE NOMBRE DE BALLES DANS LE RÉSERVOIR = 4 DONC LE ROBOT SE DIRIGE VERS LA ZONE DE DÉCHARGE LA PLUS PROCHE
         # Calcule la zone la plus proche
-        # Envoie au contrôleur un waypoint ?
+        # Tant que le robot ne se situe pas dans la zone de décharge, il continue d'avancer (envoi de ligne au contrôleur)
+        # Une fois qu'il se situe dans la zone de décharge, le state 4 est appelé avec la fonction self.is_in_discharge_area()
 
         self.get_logger().info("I'm in state 3 !")
 
-        # FONCTION À COMPLÉTER
-    
+        # On calcule la trajectoire une seule fois : pas de changement de cible en cours de route
+        self.closest_area = self.compute_closest_area(self.crabe.getPos()) # 1 ou 2
+        self.target = self.compute_area_center(self.closest_area)
+        self.crabe.setTarget(self.target) # Envoi du point à atteindre au path_planner
+        rate = Rate(2)
+        rate.sleep() # On dort un peu le temps que la trajectoire soit calculée
+        self.waypoints = self.crabe.getWaypoints() # Récupération de la liste de waypoints calculés par le path_planner
+
+        while (self.crabe.isIn() == False):
+
+            self.A, self.B = compute_next_line(self.waypoints) # Calcul de A et de B
+            self.crabe.setLine(self.A, self.B) # Envoi de ligne au contrôleur
+            self.crabe.setSpeed(2)
+
+            rate = Rate(2)
+            rate.sleep()
+        
+        self.crabe.setSpeed(0)
+        self.is_in_discharge_area()
+
+
 
     def state4_enter_callback(self):
-        # Ouvre la porte arrière (publie sur le topic ros une force)
-        # Envoie au contrôleur un waypoint pour sortir de la zone ?
+        # LE ROBOT SE SITUE DANS UNE ZONE DE DÉCHARGE
+        # Ouvre la porte arrière
+        # Envoie au path planner une position à atteindre
+        # Récupère la liste des waypoints
+        # Tant que le robot n'est pas sorti de la zone de décharge, on envoie les lignes à suivre au contrôleur
+        # Une fois qu'il est sorti de la zone, on referme la porte arrière et on revient dans l'état 1
 
         self.get_logger().info("I'm in state 4 !")
 
-        # FONCTION À COMPLÉTER
+        self.crabe.openBackDoor()
+
+        # On calcule la trajectoire une seule fois : pas de changement de cible en cours de route
+        self.target = self.compute_waiting_point(self.closest_area) # Cible à atteindre : un point en dehors de la zone de décharge
+        self.crabe.setTarget(self.target) # Envoi du point à atteindre au path_planner
+        rate = Rate(2)
+        rate.sleep() # On dort un peu le temps que la trajectoire soit calculée
+        self.waypoints = self.crabe.getWaypoints() # Récupération de la liste de waypoints calculés par le path_planner
+
+        while (self.crabe.isIn() == True):
+
+            self.A, self.B = compute_next_line(self.waypoints) # Calcul de A et de B
+            self.crabe.setLine(self.A, self.B) # Envoi de ligne au contrôleur
+            self.crabe.setSpeed(2)
+
+            rate = Rate(2)
+            rate.sleep()
+        
+        self.crabe.setSpeed(0)
+        self.crabe.closeBackDoor()
+        self.nb_collected_balls = 0 # On remet à 0 le nombre de balles collectées dans le réservoir
+        print(self.nb_collected_balls)
+        print(self.nb_tot) # Le nombre total de balles ramassées n'est par contre pas remis à 0
+        self.not_in_discharge_area() # On trigger l'état 1 et la boucle est bouclée
+
     # ------------------------------------------------------------------------------------------------------------------------
-
-
 
 
     # AUTRES FONCTIONS
     # ------------------------------------------------------------------------------------------------------------------------
-    def update_nb_balls(self):
-        self.nb_collected_balls += 1
-
 
     def compute_closest_ball(self, pos_rob, list_balls):
-        closest_ball = Pose()
-        # FONCTION À COMPLÉTER
+        """
+        Fonction prenant en entrée la position du robot et la liste des positions de toutes les balles détectées
+        et retournant la balle la plus proche (calcul de distance en ligne droite)
+        """
+        closest_ball = np.zeros((1,2))
+        dmin = 30
+        for i in range (len(list_balls)) : 
+            d = np.sqrt((pos_rob[0][0] - list_balls[i][0])**2 + (pos_rob[0][1] - list_balls[i][1])**2)
+            if d < dmin :
+                dmin = d
+                closest_ball[0][0] = list_balls[i][0]
+                closest_ball[0][1] = list_balls[i][1]
 
         return closest_ball
+    
+
+    def compute_next_line(self, waypoints_list) :
+        """
+        Fonction prenant en entrée la liste des waypoints calculée par le path planner, et retournant
+        la prochaine ligne [AB] à suivre, et donc à envoyer au contrôleur
+        """
+
+        # FONCTION À COMPLÉTER
+        # RÉCUPÉRER CODE GUERLÉDAN NAVIGATOR NODE
+
+        return A, B
+    
+
+    def compute_closest_area(self, pos_rob):
+        """
+        Fonction prenant en entrée la position du robot et retournant la zone de décharge la plus proche 
+        (calcul de distance en ligne droite entre la position du robot et le centre de la zone de décharge)
+        """
+
+        c1 = self.compute_area_center(1)
+        c2 = self.compute_area_center(2)
+
+        d1 = np.sqrt((pos_rob[0][0] - c1[0][0])**2 + (pos_rob[0][1] - c1[0][1])**2)
+        d2 = np.sqrt((pos_rob[0][0] - c2[0][0])**2 + (pos_rob[0][1] - c2[0][1])**2)
+
+        if d1 <= d2 :
+            closest_area = 1
+        else :
+            closest_area = 2
+
+        return closest_area # 1 ou 2
+
+
+    def compute_area_center(self, area_number):
+        """
+        Fonction prenant en entrée la zone de décharge (1 ou 2)
+        et retournant le point target à rejoindre par le robot (au centre de la zone de décharge)
+        """
+
+        target = np.zeros((1,2))
+        if area_number == 1 :
+            target[0][0] = -14
+            target[0][1] = -7
+        else if area_number == 2 :
+            target[0][0] = 14
+            target[0][1] = 7
+
+        return target
+
+
+    def compute_waiting_point(self, area_number):
+        """
+        Fonction prenant en entrée la zone de décharge (1 ou 2)
+        et retournant le point target à rejoindre par le robot après avoir déchargé les balles (sur le côté du terrain)
+        """
+
+        target = np.zeros((1,2))
+        if area_number == 1 :
+            target[0][0] = -13
+            target[0][1] = 0
+        else if area_number == 2 :
+            target[0][0] = 13
+            target[0][1] = 0
+
+        return target
+
     # ------------------------------------------------------------------------------------------------------------------------
 
     
@@ -195,16 +306,16 @@ class CrabeBotFSM(Node):
 
     def nb_balls_ok(self):
         res = False
-        if self.collected_balls < 4 :
+        if (self.nb_collected_balls < 4) and (self.nb_tot < 8) :
             res = True
         return res
 
 
     def nb_balls_max(self):
         res = False
-        if self.collected_balls == 4 :
+        if (self.nb_collected_balls == 4) or (self.nb_collected_balls == 2 and self.nb_tot == 8) :
             res = True
-            return res
+        return res
     # ------------------------------------------------------------------------------------------------------------------------
 
 
