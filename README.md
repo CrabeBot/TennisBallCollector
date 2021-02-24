@@ -9,12 +9,14 @@ Ceci est un template de dépôt Git pour le cours d'ingénierie système et mod�
 ros-foxy-navigation2 ros-foxy-nav2-bringup
 OpenCV 4.2
 tf_conversions (python3-tf-conversions aptitude package)
-
+```bash
+pip3 install shapely transition opencv numpy scypi
+```
 ### Démarrer la simulation
 
 ###### A compléter avec la/les commande(s) à lancer.
 ```bash
-# TODO
+ros2 launch state_machine all.launch.py
 ```
 
 

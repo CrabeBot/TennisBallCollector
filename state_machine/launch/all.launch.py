@@ -60,11 +60,11 @@ def generate_launch_description():
 
 
     return LaunchDescription([
-        fsm,
+        # fsm,
         path_planner,
         crabe,
         ball_localization,
-        crabe_controller,
-        crabe_localization,
-        player_localization
+        # crabe_controller,
+        # crabe_localization,
+        # player_localization
     ])
