@@ -2,7 +2,7 @@ import tf2_ros
 import numpy as np
 from rclpy import Node
 from geometry_msgs.msg import Wrench, Point
-from std_msgs.msg import Float32, Float32MultiArray
+from std_msgs.msg import Float32, Float32MultiArray, Float64MultiArray
 from rclpy.qos import qos_profile_services_default
 
 
@@ -23,12 +23,16 @@ class Crabe():
         self.pubPointB = node.create_publisher(Point, "/pointB", qos_profile_services_default)
         self.pubTarget = node.create_publisher(Point, "/target", qos_profile_services_default)
 
-        node.create_subscription(Float32MultiArray, "/balls", self.__balls_callback)
-        node.create_subscription(Float32MultiArray, "/waypoints", self.__wp_callback)
+        node.create_subscription(Float32MultiArray, "/balls_coords", self.__balls_callback)
+        node.create_subscription(Float64MultiArray, "/waypoints", self.__wp_callback)
 
 
     def __balls_callback(self, msg):
-        self.balls = msg.data
+        self.balls = [None for i in range(10)]
+        lst = msg.data
+        for i in range(len(lst)//3):
+            ind = 3*i
+            self.balls[ind] = (lst[ind+1], lst[ind+2])
 
     def __wp_callback(self, msg):
         wpData = msg.data
