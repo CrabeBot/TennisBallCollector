@@ -5,7 +5,7 @@ from rclpy.node import Node
 import numpy as np
 import geometry_msgs
 from geometry_msgs.msg import Quaternion
-from std_msgs.msg import Int32, Float32MultiArray
+from std_msgs.msg import Int32, Float32MultiArray, Int32MultiArray
 
 
 class test(Node):
@@ -38,8 +38,9 @@ class test(Node):
     def disappeared_callback(self, msg):
         index = msg.data
         n = len(index)
-        for i in range(n):
-            self.dico[i] = [10000 , 10000]
+        for i in index:
+            if i!=-1:
+                self.dico[i] = [10000 , 10000]
         #self.get_logger().info(f"{n-1} balles trouvees")
         #self.get_logger().info(f"{self.dico}")
         #self.get_logger().info("======================================")
