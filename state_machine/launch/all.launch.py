@@ -37,18 +37,22 @@ def generate_launch_description():
 
 
     #### Controleur
+    """
     pkg_share_controller = FindPackageShare(package='crabe_controller').find('crabe_controller')
     crabe_controller = IncludeLaunchDescription(
                 PythonLaunchDescriptionSource([pkg_share_controller, '/launch/crabe_controller.launch.py']),
              )
-
+    """
+    crabe_controller = Node(package='crabe_controller', executable='controller', output='screen')
 
     #### localisation du robot
+    """
     pkg_share_crabe_loc = FindPackageShare(package='crabe_localization').find('crabe_localization')
     crabe_localization = IncludeLaunchDescription(
                 PythonLaunchDescriptionSource([pkg_share_crabe_loc, '/launch/localization.launch.py']),
              )
-
+    """
+    crabe_localization = Node(package='crabe_localization', executable='localizer', output='screen')
 
     #### localisation des joueurs
     pkg_share_player_loc = FindPackageShare(package='player_localization').find('player_localization')
@@ -64,7 +68,7 @@ def generate_launch_description():
         path_planner,
         crabe,
         ball_localization,
-        #crabe_controller,
+        crabe_controller,
         crabe_localization,
         player_localization
     ])

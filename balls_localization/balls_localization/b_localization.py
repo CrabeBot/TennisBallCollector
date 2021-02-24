@@ -35,7 +35,7 @@ class b_localizer(Node):
         self.profile = qos_profile_sensor_data
         self.im_subscriber = self.create_subscription(Image, "/zenith_camera/image_raw", self.im_callback, qos_profile=self.profile)
         
-        self.visualize = True
+        self.visualize = False
         self.bridge = cv_bridge.CvBridge()
         
         self.first_spin = True
