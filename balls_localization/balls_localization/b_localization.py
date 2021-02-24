@@ -208,7 +208,7 @@ class b_localizer(Node):
             
             lst_coords = Float32MultiArray()
             lst_coords.data = [1.0, 2.0, 3.0]
-            print("lst : ", lst)
+            #print("lst : ", lst)
             lst_coords.data = lst
             print("lst_coords.data : ", len(lst_coords.data))
             self.balls_publisher.publish(lst_coords)
