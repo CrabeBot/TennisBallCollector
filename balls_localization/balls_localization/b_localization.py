@@ -1,6 +1,6 @@
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import Int32, Float32MultiArray, Int32MultiArray
+from std_msgs.msg import Int32, Float32MultiArray
 from sensor_msgs.msg import Image, CameraInfo
 
 from rclpy.qos import qos_profile_sensor_data
@@ -32,7 +32,6 @@ class b_localizer(Node):
     def __init__(self):
         super().__init__("b_localizer")
         self.balls_publisher = self.create_publisher(Float32MultiArray, "/balls_coords", 10)
-        self.ind_disappeared_publisher = self.create_publisher(Int32MultiArray, "/balls_disappeared", 10)
         self.profile = qos_profile_sensor_data
         self.im_subscriber = self.create_subscription(Image, "/zenith_camera/image_raw", self.im_callback, qos_profile=self.profile)
         
@@ -199,8 +198,20 @@ class b_localizer(Node):
 
                 cv2.imshow("tracking", frame_show)
                 cv2.waitKey(1)
-
+            lst = []
+            for b in self.balls:
+                if (b.detected and b.is_visible):
+                    w = self.imgToWorld(b.coords[0], b.coords[1])
+                    lst.append(b.num)
+                    lst.append(w[0])
+                    lst.append(w[1])
             
+            lst_coords = Float32MultiArray()
+            lst_coords.data = [1.0, 2.0, 3.0]
+            lst_coords.data = lst
+            print("lst_coords.data : ", len(lst_coords.data))
+            self.balls_publisher.publish(lst_coords)
+
 
 def main(args=None):
     rclpy.init(args=args)

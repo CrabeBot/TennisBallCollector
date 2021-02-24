@@ -12,7 +12,6 @@ class test(Node):
     def __init__(self):
         super().__init__("test")
         self.balls_subscriber = self.create_subscription(Float32MultiArray, "/balls_coords", self.coords_callback, 10)
-        self.balls_subscriber = self.create_subscription(Float32MultiArray, "/balls_disappeared", self.disappeared_callback, 10)
 
         self.dico = {
             0:[],
