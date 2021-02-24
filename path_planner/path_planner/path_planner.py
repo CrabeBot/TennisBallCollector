@@ -12,6 +12,7 @@ import tf2_py
 import tf2_ros
 import numpy as np
 import geometry_msgs
+from std_msgs.msg import Float64MultiArray
 from geometry_msgs.msg import Quaternion, Pose2D
 import cv2
 import cv_bridge
@@ -41,7 +42,7 @@ def rect_from_center(l, L, x=0, y=0):
 
 def world_to_img(X):
     X = np.array(list(X)).reshape(len(X), -1)
-    X = (-X[::-1, :]*PX_WIDHT/WIDHT + np.array(((DX + PX_WIDHT/2, DY + PX_HEIGHT/2)))).astype(int)
+    X = (-X[:, ::-1]*PX_WIDHT/WIDHT + np.array(((DX + PX_WIDHT/2, DY + PX_HEIGHT/2)))).astype(int)
     return X
 
 def img_to_world(x, y):
@@ -57,30 +58,51 @@ class path_planner(Node):
         self.profile = qos_profile_sensor_data
         self.im_subscriber = self.create_subscription(Image, "/zenith_camera/image_raw", self.im_callback, qos_profile=self.profile)
         self.obj_subscriber = self.create_subscription(Pose2D, "/objectif", self.obj_callback, qos_profile=self.profile)
-        # self.obstacles_subscriber = self.create_subscription(Pose2D, "/objectif", self.obstacles_callback, qos_profile=self.profile)
+        self.p1_subscriber = self.create_subscription(Pose2D, "/player1Pose", self.obstacles_callback, qos_profile=self.profile)
+        self.p2_subscriber = self.create_subscription(Pose2D, "/player2Pose", self.obstacles_callback, qos_profile=self.profile)
+
+        self.wps_pub = self.create_publisher(Float64MultiArray, "/waypoints", self.profile)
 
         self.br = tf2_ros.TransformBroadcaster(self)
 
         self.l_rob = 0.5
         self.obstacles_fixes()
-        self.terrain = Polygon(rect_from_center(WIDHT, HEIGHT)).buffer(-self.l_rob)
+        self.terrain = Polygon(rect_from_center(HEIGHT, WIDHT)).buffer(-self.l_rob)
+        self.small_terrain = Polygon(rect_from_center(HEIGHT, WIDHT)).buffer(-3)
 
         self.pos = (-5, 0)
         self.path = LineString(((0, 0), (0, 0)))
-        a = Polygon(((101, 100), (101, 101), (100, 101)))
-        self.polys = MultiPolygon((a, a))
+        self.polys = MultiPolygon()
+        self.saved_obs
+        self.i_player = 0
         
     def obstacles_fixes(self):
 
-        l_box, L_box = 2.7, 2.3
+        l_box, L_box = 2.3, 2.7
 
-        l_filet, L_filet = 0.3, 13
+        l_filet, L_filet = 13, 0.3
+
+        l_mur, e_mur = 0.1, 0.5
+        mur1 = rect_from_center(l_mur, e_mur,5.7, 14.5)
+        mur2 = rect_from_center(e_mur, l_mur,7.5, 12.5)
+        mur3 = rect_from_center(l_mur, e_mur,-5.7, -14.5)
+        mur4 = rect_from_center(e_mur, l_mur,-7.5, -12.5)
+
+
+        # cout("{}, {}".format(WIDHT/2 - l_box, HEIGHT/2 - L_box))
 
         self.obstacles = MultiPolygon([
-            Polygon(rect(l_box, L_box, -WIDHT/2, -HEIGHT/2)), 
-            Polygon(rect(l_box, L_box, WIDHT/2 - l_box, HEIGHT/2 - L_box)), 
+            Polygon(mur1),
+            Polygon(mur2),
+            Polygon(mur3),
+            Polygon(mur4),
+            # Polygon(rect(l_box, L_box, -WIDHT/2, -HEIGHT/2)), 
+            # Polygon(rect(l_box, L_box, WIDHT/2 - l_box, HEIGHT/2 - L_box)), 
             Polygon(rect_from_center(l_filet, L_filet))
             ]).buffer(self.l_rob)
+
+        self.saved_obs = self.obstacles
+        
 
     def rec_path(self, A, B, d, sens=0):
   
@@ -187,6 +209,7 @@ class path_planner(Node):
                 if pts != None:
                     pts.append(C)
                     self.path = LineString(pts)
+                    self.send_wps()
 
             # if pts != None:
             #     I = self.terrain.exterior.intersection(box.exterior)
@@ -197,9 +220,29 @@ class path_planner(Node):
             pts, d = self.rec_path(self.pos, A, 0)
             if pts != None:
                 self.path = LineString(pts)
+                self.send_wps()
 
     def obstacles_callback(self, msg):
-        pass
+
+        dalpha = np.pi/6
+        r = 4
+        x, y, theta = msg.x, msg.y, msg.theta
+        A, B = (x + r*np.cos(theta+dalpha), y + r*np.sin(theta+dalpha)), (x + r*np.cos(theta-dalpha), y+ r*np.sin(theta-dalpha))
+        
+        poly = Polygon((A, B, (x, y))).intersection(self.small_terrain)
+        
+        if self.i_player < 2:
+            self.obstacles = self.obstacles.union(poly)
+            self.i_player += 1
+        else:
+            self.obstacles = self.saved_obs.union(poly)
+            self.i_player = 0
+
+
+    def send_wps(self):
+        data_to_send = Float64MultiArray()  # the data to be sent, initialise the array
+        data_to_send.data = self.path.flatten() # assign the array with the value you want to send
+        self.wps_pub.publish(data_to_send)
 
 def main(args=None):
     rclpy.init(args=args)
