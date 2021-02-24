@@ -36,6 +36,7 @@ class CrabeBotFSM(Node):
         self.B = [0, 0]
         self.closest_area = 1 # 1 ou 2
         self.pos_balls = [None, None, None, None, None, None, None, None, None, None] # liste des positions des balles (liste de tuples (x,y))
+        self.rate = self.create_rate(10)
 
         # Initialisation de la machine à états
         self.machine = Machine(model=self, states=CrabeBotFSM.states, initial='asleep')
@@ -93,11 +94,10 @@ class CrabeBotFSM(Node):
         # On envoie l'information au path planner qui calcule et renvoie une liste de waypoints
         # Puis on trigger le state2 en lançant self.ball_detected()
 
-        self.get_logger().info("I'm in state 1 !")
+        self.get_logger().info("J'attends de détecter une balle !")
 
         while all(v is None for v in self.crabe.getBalls()):
-            rate = Rate(2)
-            rate.sleep()
+            self.rate.sleep()
 
         self.ball_detected()
 
@@ -109,7 +109,7 @@ class CrabeBotFSM(Node):
         # puis on trigger le state3 ou le state1 avec self.ball_collected()
         # et l'un ou l'autre se réalisera en fonction de la condition sur le nombre de balles collectées
 
-        self.get_logger().info("I'm in state 2 !")
+        self.get_logger().info("Je me dirige vers une balle !")
 
         same_pos = False
         eps = 0.1
@@ -122,8 +122,7 @@ class CrabeBotFSM(Node):
 
             self.target = self.crabe.getBalls[self.closest_ball_index] # Cible à atteindre
             self.crabe.setTarget(self.target) # Envoi du point à atteindre au path_planner
-            rate = Rate(2)
-            rate.sleep() # On dort un peu le temps que la trajectoire soit calculée
+            self.rate.sleep() # On dort un peu le temps que la trajectoire soit calculée
             self.waypoints = self.crabe.getWaypoints() # Récupération de la liste de waypoints calculés par le path_planner
             
             self.crabe.setSpeed(2)
@@ -133,8 +132,7 @@ class CrabeBotFSM(Node):
                 self.compute_next_line() # Calcul de A et de B
                 self.crabe.setLine(self.A, self.B) # Envoi de ligne au contrôleur
 
-            rate = Rate(2)
-            rate.sleep()
+            self.rate.sleep()
 
             # Si la position du robot est égale à la position de la balle à un epsilon près, on considère qu'ils ont la même position
             if (self.closest_ball[0][0] - eps < self.crabe.getPos()[0][0] < self.closest_ball[0][0] + eps) and (self.closest_ball[0][1] - eps < self.crabe.getPos()[0][1] < self.closest_ball[0][1] + eps) :
@@ -157,14 +155,13 @@ class CrabeBotFSM(Node):
         # Tant que le robot ne se situe pas dans la zone de décharge, il continue d'avancer (envoi de ligne au contrôleur)
         # Une fois qu'il se situe dans la zone de décharge, le state 4 est appelé avec la fonction self.is_in_discharge_area()
 
-        self.get_logger().info("I'm in state 3 !")
+        self.get_logger().info("Je me dirige vers une zone de décharge !")
 
         # On calcule la trajectoire une seule fois : pas de changement de cible en cours de route
         self.closest_area = self.compute_closest_area(self.crabe.getPos()) # 1 ou 2
         self.target = self.compute_area_center(self.closest_area)
         self.crabe.setTarget(self.target) # Envoi du point à atteindre au path_planner
-        rate = Rate(2)
-        rate.sleep() # On dort un peu le temps que la trajectoire soit calculée
+        self.rate.sleep() # On dort un peu le temps que la trajectoire soit calculée
         self.waypoints = self.crabe.getWaypoints() # Récupération de la liste de waypoints calculés par le path_planner
 
         while (self.crabe.isIn() == False):
@@ -176,8 +173,7 @@ class CrabeBotFSM(Node):
                 self.compute_next_line() # Calcul de A et de B
                 self.crabe.setLine(self.A, self.B) # Envoi de ligne au contrôleur
                 
-            rate = Rate(2)
-            rate.sleep()
+            self.rate.sleep()
         
         self.crabe.setSpeed(0)
         self.is_in_discharge_area()
@@ -192,14 +188,13 @@ class CrabeBotFSM(Node):
         # Tant que le robot n'est pas sorti de la zone de décharge, on envoie les lignes à suivre au contrôleur
         # Une fois qu'il est sorti de la zone, on referme la porte arrière et on revient dans l'état 1
 
-        self.get_logger().info("I'm in state 4 !")
+        self.get_logger().info("Je décharge mes balles !")
 
         self.crabe.openBackDoor()
 
         # On calcule la trajectoire une seule fois : pas de changement de cible en cours de route
         self.target = self.compute_waiting_point(self.closest_area) # Cible à atteindre : un point en dehors de la zone de décharge
         self.crabe.setTarget(self.target) # Envoi du point à atteindre au path_planner
-        rate = Rate(2)
         rate.sleep() # On dort un peu le temps que la trajectoire soit calculée
         self.waypoints = self.crabe.getWaypoints() # Récupération de la liste de waypoints calculés par le path_planner
 
@@ -212,8 +207,7 @@ class CrabeBotFSM(Node):
                 self.compute_next_line() # Calcul de A et de B
                 self.crabe.setLine(self.A, self.B) # Envoi de ligne au contrôleur
 
-            rate = Rate(2)
-            rate.sleep()
+            self.rate.sleep()
         
         self.crabe.setSpeed(0)
         self.crabe.closeBackDoor()

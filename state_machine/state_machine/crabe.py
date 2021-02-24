@@ -1,9 +1,10 @@
 import tf2_ros
 import numpy as np
-from rclpy import Node
+import rclpy
+from rclpy.node import Node
 from geometry_msgs.msg import Wrench, Point
 from std_msgs.msg import Float32, Float32MultiArray, Float64MultiArray
-from rclpy.qos import qos_profile_services_default
+from rclpy.qos import qos_profile_services_default, qos_profile_sensor_data
 
 
 class Crabe():
@@ -15,7 +16,7 @@ class Crabe():
         self.balls = []
         
         self.tfBuffer = tf2_ros.Buffer()
-        self.listener = tf2_ros.TransformListener(self.tfBuffer, self)
+        self.listener = tf2_ros.TransformListener(self.tfBuffer, self.node)
         self.pubBackDoor = node.create_publisher(Wrench, "/force_back_door", qos_profile_services_default)
         self.pubFrontDoor = node.create_publisher(Wrench, "/force_front_door", qos_profile_services_default)
         self.pubVel = node.create_publisher(Float32, "/vel", qos_profile_services_default)
@@ -23,8 +24,8 @@ class Crabe():
         self.pubPointB = node.create_publisher(Point, "/pointB", qos_profile_services_default)
         self.pubTarget = node.create_publisher(Point, "/target", qos_profile_services_default)
 
-        node.create_subscription(Float32MultiArray, "/balls_coords", self.__balls_callback)
-        node.create_subscription(Float64MultiArray, "/waypoints", self.__wp_callback)
+        node.create_subscription(Float32MultiArray, "/balls_coords", self.__balls_callback, qos_profile_sensor_data)
+        node.create_subscription(Float64MultiArray, "/waypoints", self.__wp_callback, qos_profile_sensor_data)
 
 
     def __balls_callback(self, msg):
