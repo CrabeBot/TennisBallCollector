@@ -202,12 +202,13 @@ class b_localizer(Node):
             for b in self.balls:
                 if (b.detected and b.is_visible):
                     w = self.imgToWorld(b.coords[0], b.coords[1])
-                    lst.append(b.num)
+                    lst.append(float(b.num))
                     lst.append(w[0])
                     lst.append(w[1])
             
             lst_coords = Float32MultiArray()
             lst_coords.data = [1.0, 2.0, 3.0]
+            print("lst : ", lst)
             lst_coords.data = lst
             print("lst_coords.data : ", len(lst_coords.data))
             self.balls_publisher.publish(lst_coords)
