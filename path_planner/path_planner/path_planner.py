@@ -47,6 +47,9 @@ def world_to_img(X):
 def img_to_world(x, y):
     pass
 
+def cout(msg):
+    rclpy.logging.get_logger("path_finder").info(msg)
+
 
 class path_planner(Node):
     def __init__(self):
@@ -54,6 +57,7 @@ class path_planner(Node):
         self.profile = qos_profile_sensor_data
         self.im_subscriber = self.create_subscription(Image, "/zenith_camera/image_raw", self.im_callback, qos_profile=self.profile)
         self.obj_subscriber = self.create_subscription(Pose2D, "/objectif", self.obj_callback, qos_profile=self.profile)
+        # self.obstacles_subscriber = self.create_subscription(Pose2D, "/objectif", self.obstacles_callback, qos_profile=self.profile)
 
         self.br = tf2_ros.TransformBroadcaster(self)
 
@@ -63,6 +67,8 @@ class path_planner(Node):
 
         self.pos = (-5, 0)
         self.path = LineString(((0, 0), (0, 0)))
+        a = Polygon(((101, 100), (101, 101), (100, 101)))
+        self.polys = MultiPolygon((a, a))
         
     def obstacles_fixes(self):
 
@@ -75,14 +81,6 @@ class path_planner(Node):
             Polygon(rect(l_box, L_box, WIDHT/2 - l_box, HEIGHT/2 - L_box)), 
             Polygon(rect_from_center(l_filet, L_filet))
             ]).buffer(self.l_rob)
-
-    def compute_path(self, obj):
-        
-        
-        pts, d = self.rec_path(self.pos, obj, 0)
-        if pts != None:
-            self.path = LineString(pts)
-
 
     def rec_path(self, A, B, d, sens=0):
   
@@ -130,9 +128,6 @@ class path_planner(Node):
         d += cdist(np.array(A).reshape(1, -1), np.array(B).reshape(1, -1))
         return [A, B], d
 
-
-        
-
     def im_callback(self, msg):
 
         if DEBUG:
@@ -146,10 +141,15 @@ class path_planner(Node):
                 pts = world_to_img(obs.exterior.coords).reshape((-1,1,2))
                 cv2.polylines(cv_im,[pts],True,(0,0,255))
 
-                if self.path.crosses(obs):
-                    coords = (obs.union(self.path)).convex_hull.exterior.coords
-                    coords = world_to_img(coords)
-                    cv2.polylines(cv_im,[coords],True,(255,0,255))
+                # if self.path.crosses(obs):
+                #     coords = (obs.union(self.path)).convex_hull.exterior.coords
+                #     coords = world_to_img(coords)
+                #     cv2.polylines(cv_im,[coords],True,(255,0,255))
+
+            for poly in self.polys.geoms:
+                pts = world_to_img(poly.exterior.coords).reshape((-1,1,2))
+                cv2.polylines(cv_im,[pts],True,(255,0,255))
+
 
 
             pts = world_to_img(self.terrain.exterior.coords).reshape((-1,1,2))
@@ -168,19 +168,38 @@ class path_planner(Node):
 
     def obj_callback(self, msg):
         A = (msg.x, msg.y)
-        # if not self.terrain.contains(Point(A)):
-        #     box = Point(A).buffer(self.l_rob)
-        #     self.compute_path(A)
-        #     if self.path != None:
-        #         I = self.terrain.exterior.intersection(box.exterior)
-        #         path = list(self.path.coords)
-        #         for B in I:
-        #             path.append(list(B.coords))
-        #         self.path = LineString(path)
-        # else:
-        #     self.compute_path(A)
-        self.compute_path(A)
+        if not self.terrain.contains(Point(A)):
+            
+            cout("Objectif not in safe zone")
 
+            #box = Point(A).buffer(2*self.l_rob)
+            box = Polygon(rect_from_center(3*self.l_rob, 3*self.l_rob, A[0], A[1]))
+            self.polys = self.polys.union(box)
+
+            #pts, d = self.rec_path(self.pos, A, 0)
+            I = self.terrain.exterior.intersection(box.exterior)
+            if len(I.geoms) == 2:
+                B = I.geoms[0]
+                C = I.geoms[1]
+                if cdist(np.array(A).reshape(1, -1), np.array(B).reshape(1, -1)) > cdist(np.array(A).reshape(1, -1), np.array(C).reshape(1, -1)):
+                    B, C = C, B
+                pts, d1 = self.rec_path(self.pos, B, 0)
+                if pts != None:
+                    pts.append(C)
+                    self.path = LineString(pts)
+
+            # if pts != None:
+            #     I = self.terrain.exterior.intersection(box.exterior)
+            #     for B in I:
+            #         cout(B)
+            #     self.path = LineString(pts)
+        else:
+            pts, d = self.rec_path(self.pos, A, 0)
+            if pts != None:
+                self.path = LineString(pts)
+
+    def obstacles_callback(self, msg):
+        pass
 
 def main(args=None):
     rclpy.init(args=args)

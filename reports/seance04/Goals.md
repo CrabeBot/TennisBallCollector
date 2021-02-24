@@ -1,6 +1,6 @@
-# Objectifs du 17/02
+# Objectifs du 19/02
 
-PO: Romane FLÉCHARD
+PO: Colin Baumgard
 
 
 ## Fonctionnalités attendues

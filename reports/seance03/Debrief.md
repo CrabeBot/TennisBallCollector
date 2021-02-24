@@ -1,56 +1,62 @@
-# Debrief du 19/02
+# Debrief du 17/02
 
-PO: Colin Baumgard
+PO: Romane FLÉCHARD
 
 
 ## Bilan
 
-Pourcentage de tâches réalisées: 80 %
+Pourcentage de tâches réalisées: 65 %
 
 
 ### Ce qui a fonctionné
 
 --> Détection / Tracking des balles : 
-        - Passage en coordonnées monde
-        - Tracking envoyé sur un topic 
+        - Intégrer le code dans un noeud ROS : OK
+        - Prendre en compte la disparition des balles : Ok 
 
---> FSM :
-        - Squelette FSM
-        - Code "vide" FSM 
+--> Architecture du robot :
+        - Adapter la porte à l'arrière du robot pour le déchargement des balles : OK
+        - Créer une porte à l'avant du robot pour empêcher la perte de balles lors d'une décélération : OK
 
 --> Localisation du robot :
-        - Publication /topic
-
---> Localisation des joueurs:
-        - Publication /topic
+        - Filtrer les positions (Kalman ou simple lissage) : OK
+        - Corriger les distorsions : quasi OK
 
 --> Navigation / Contrôle du robot :
-        - V1 du path_finder : ok
-        - gestion obstacles, safe_zone: ok
-        - suiveur de ligne : ok
+        - Faire schéma architecture ROS du projet et définir les communications entre les différents noeuds : OK
+        - Définir stratégie de déplacement du robot pour le ramassage des balles et l'évitement d'obstacles : OK
 
 
 ### Ce qui n'a pas fonctionné
 
 --> Détection / Tracking des balles :
-        - Mieux gerer les disparition des balles
+        - Créer une liste contenant la position des balles et tenant compte de leur ordre d'apparition
+        - Publier sur un topic la position de la première balle de la liste (celle à aller chercher en priorité)
+        CAUSE : Problème de numérotation lorsque deux balles passent à côté l'une de l'autre
 
 --> Navigation / Contrôle du robot :
-        - ajouter code dans fsm
+        - Ajouter commande manuelle du robot par keyboard pour tests Gazebo
+        CAUSE : abandon de l'idée car trop compliqué à mettre en place pour pas grand chose
 
-
+        - Commencer à coder la commande du robot : 
+            - Envoi de la position des obstacles sur un topic
+            - Envoi de la position des balles sur un topic
+            - Création d'une fsm
+            - Création d'un path_planner
+            - Création d'un noeud contrôleur
+        CAUSE : Manque de temps mais c'est en cours. À poursuivre la prochaine fois.
 
 
 ### Retour d'expérience du PO
 
-C'est intéressant d'avoir la gestion du projet dans les mains, un peu stressant avec l'arrivée de la deadline.
--> Faire des points toutes les heures permet de se rendre compte de l'avancement avec des ajustements si besoin.
--> trouver le temps de faire le PO + le code !!
- 
+Intéressant de passer du temps sur la gestion de projet.
+Beaucoup de temps "perdu" à régler des bugs dans le code, qu'il faudrait anticiper lorsqu'on fixe les objectifs.
+On a toujours tendance à se fixer des objectifs trop élevés, car on se place dans des conditions idéales, sans prévoir les aléas qui créent des pertes de temps. Il faudrait penser à réduire la quantité d'objectifs pour un temps donné, quitte à en ajouter plus tard s'ils sont réalisés plus vite que prévu.
+
+
 ### Conseils pour le prochain PO
 
-Toujours continuer les efforts pour mettre à jour le projet Taïga en continu.
-Ne pas se faire avoir par le : juste 5min en plus ;)
+Continuer les efforts pour mettre à jour le projet Taïga en continu.
 
 
 ## Nouvelles mesures
