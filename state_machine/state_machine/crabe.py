@@ -56,22 +56,22 @@ class Crabe():
 
     def closeFrontDoor(self):
         m = Wrench()
-        m.force.z = -50
+        m.force.z = -50.0
         self.pubFrontDoor.publish(m)
 
     def openFrontDoor(self):
         m = Wrench()
-        m.force.z = 50
+        m.force.z = 50.0
         self.pubFrontDoor.publish(m)
 
     def closeBackDoor(self):
         m = Wrench()
-        m.force.z = -50
+        m.force.z = -50.0
         self.pubBackDoor.publish(m)
 
     def openBackDoor(self):
         m = Wrench()
-        m.force.z = 50
+        m.force.z = 50.0
         self.pubBackDoor.publish(m)
 
     def getBalls(self):

@@ -4,7 +4,8 @@ from transitions import Machine, State
 import rclpy
 from rclpy.node import Node
 import numpy as np
-import time
+
+
 
 from state_machine.crabe import Crabe
 
@@ -73,8 +74,8 @@ class CrabeBotFSM(Node):
         self.machine.add_transition(trigger='not_in_discharge_area', source='dropping balls', dest='waiting')
 
         # ------------------------------------------------------------------------------------------------------------------------
-
-
+        self.timer = self.create_timer(0.1, self.loop)
+        self.statenb = 0
     # FONCTIONS DE CALLBACK À L'INTÉRIEUR DES STATES
     # ------------------------------------------------------------------------------------------------------------------------
 
@@ -120,55 +121,55 @@ class CrabeBotFSM(Node):
         
     
     def isCatched(self, eps):
-        same_zone = (self.closest_ball[0] - eps < self.crabe.getPos()[0] < self.closest_ball[0] + eps) and (self.closest_ball[1] - eps < self.crabe.getPos()[1] < self.closest_ball[1] + eps)
-        return same_zone and not self.crabe.getBalls()[self.closest_ball_index]
+        #same_zone = (self.closest_ball[0] - eps < self.crabe.getPos()[0] < self.closest_ball[0] + eps) and (self.closest_ball[1] - eps < self.crabe.getPos()[1] < self.closest_ball[1] + eps)
+        return bool(self.crabe.getBalls()[self.closest_ball_index])#same_zone and not self.crabe.getBalls()[self.closest_ball_index]
 
     def loop(self):
-        self.timer2.cancel()
-        self.get_logger().info("Loop")
-        eps = 0.1
-        setTimer = True
-        if self.waitingFirstPath :
-            if self.crabe.newWaypoints :
-                self.get_logger().info("Got first path")
-                self.crabe.newWaypoints = False
-                self.waypoint_index = 0
-                self.waypoints = self.crabe.getWaypoints()
-                self.compute_next_line()
-                self.crabe.setLine(self.A, self.B)
-                self.waitingFirstPath = False
-
-        else :                                
-            if not self.isCatched(eps):
-                self.target = self.crabe.getBalls()[self.closest_ball_index] # Cible à atteindre
-                self.crabe.setTarget(self.target) # Envoi du point à atteindre au path_planner
+        self.timer.cancel()
+        
+        if self.statenb==2:
+            self.get_logger().info("Loop")
+            eps = 0.1
+            if self.waitingFirstPath :
                 if self.crabe.newWaypoints :
+                    self.get_logger().info("Got first path")
+                    self.crabe.newWaypoints = False
                     self.waypoint_index = 0
-                    self.waypoints = self.crabe.getWaypoints() # Récupération de la liste de waypoints calculés par le path_planner
+                    self.waypoints = self.crabe.getWaypoints()
                     self.compute_next_line()
+                    self.crabe.setLine(self.A, self.B)
+                    self.waitingFirstPath = False
 
-                self.crabe.setSpeed(float(.8))
-                m = np.array(self.crabe.getPos())
-                self.get_logger().info(str(self.A)+ str(self.B))
-                if np.dot(self.B - self.A, m - self.B) > 0.0 : # Waypoint validé, on passe au suivant
-                    self.compute_next_line() # Calcul de A et de B
-                    self.crabe.setLine(self.A, self.B) # Envoi de ligne au contrôleur
-                # Si la position du robot est égale à la position de la balle à un epsilon près, on considère qu'ils ont la même position
-                if (self.closest_ball[0] - eps < self.crabe.getPos()[0] < self.closest_ball[0] + eps) and (self.closest_ball[1] - eps < self.crabe.getPos()[1] < self.closest_ball[1] + eps) :
-                    self.crabe.openFrontDoor()
+            else :                                
+                if not self.isCatched(eps):
+                    self.target = self.crabe.getBalls()[self.closest_ball_index] # Cible à atteindre
+                    self.crabe.setTarget(self.target) # Envoi du point à atteindre au path_planner
+                    if self.crabe.newWaypoints :
+                        self.waypoint_index = 0
+                        self.waypoints = self.crabe.getWaypoints() # Récupération de la liste de waypoints calculés par le path_planner
+                        self.compute_next_line()
 
-            else:
-                self.crabe.setSpeed(float(0))
-                self.nb_collected_balls += 1
-                self.nb_tot += 1
-                print(self.nb_collected_balls)
-                print(self.nb_tot)
-                self.crabe.closeFrontDoor()
-                self.ball_collected()
-                setTimer = False
-                #self.timer2.destroy()
-        if setTimer:
-            self.timer2 = self.create_timer(.1, self.loop)
+                    self.crabe.setSpeed(float(.8))
+                    m = np.array(self.crabe.getPos())
+                    self.get_logger().info(str(self.A)+ str(self.B))
+                    if np.dot(self.B - self.A, m - self.B) > 0.0 : # Waypoint validé, on passe au suivant
+                        self.compute_next_line() # Calcul de A et de B
+                        self.crabe.setLine(self.A, self.B) # Envoi de ligne au contrôleur
+                    # Si la position du robot est égale à la position de la balle à un epsilon près, on considère qu'ils ont la même position
+                    if (self.closest_ball[0] - eps < self.crabe.getPos()[0] < self.closest_ball[0] + eps) and (self.closest_ball[1] - eps < self.crabe.getPos()[1] < self.closest_ball[1] + eps) :
+                        self.crabe.openFrontDoor()
+
+                else:
+                    self.crabe.setSpeed(float(0))
+                    self.nb_collected_balls += 1
+                    self.nb_tot += 1
+
+                    self.crabe.closeFrontDoor()
+                    self.ball_collected()
+                    self.statenb = 3
+        
+        self.timer = self.create_timer(0.1, self.loop)
+
 
 
     def state2_enter_callback(self):
@@ -195,10 +196,9 @@ class CrabeBotFSM(Node):
         
         self.waitingFirstPath = True
 
-        timer_period = 0.1  # seconds
 
         self.get_logger().info("Waiting for first path")
-        self.timer2 = self.create_timer(timer_period, self.loop)       
+        self.statenb = 2
 
     def state3_enter_callback(self):
         # LE NOMBRE DE BALLES DANS LE RÉSERVOIR = 4 DONC LE ROBOT SE DIRIGE VERS LA ZONE DE DÉCHARGE LA PLUS PROCHE
@@ -246,7 +246,6 @@ class CrabeBotFSM(Node):
         # On calcule la trajectoire une seule fois : pas de changement de cible en cours de route
         self.target = self.compute_waiting_point(self.closest_area) # Cible à atteindre : un point en dehors de la zone de décharge
         self.crabe.setTarget(self.target) # Envoi du point à atteindre au path_planner
-        rate.sleep() # On dort un peu le temps que la trajectoire soit calculée
         self.waypoints = self.crabe.getWaypoints() # Récupération de la liste de waypoints calculés par le path_planner
 
 
@@ -268,7 +267,7 @@ class CrabeBotFSM(Node):
                 print(self.nb_collected_balls)
                 print(self.nb_tot) # Le nombre total de balles ramassées n'est par contre pas remis à 0
                 self.not_in_discharge_area() # On trigger l'état 1 et la boucle est bouclée
-                timer.destroy()
+                timer.cancel()
             
         timer = self.create_timer(timer_period, checkIsIn)
         
@@ -317,8 +316,8 @@ class CrabeBotFSM(Node):
         c1 = self.compute_area_center(1)
         c2 = self.compute_area_center(2)
 
-        d1 = np.sqrt((pos_rob[0][0] - c1[0][0])**2 + (pos_rob[0][1] - c1[0][1])**2)
-        d2 = np.sqrt((pos_rob[0][0] - c2[0][0])**2 + (pos_rob[0][1] - c2[0][1])**2)
+        d1 = np.sqrt((pos_rob[0] - c1[0])**2 + (pos_rob[1] - c1[1])**2)
+        d2 = np.sqrt((pos_rob[0] - c2[0])**2 + (pos_rob[1] - c2[1])**2)
 
         if d1 <= d2 :
             closest_area = 1

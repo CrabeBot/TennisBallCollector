@@ -55,7 +55,6 @@ class controller(Node):
         ke = 0.5
         e = det(hstack((b-a, m-a)))/norm(b-a)
         thetaBar = phi - ke*arctan(e/r)
-        self.get_logger().info(str(a)+ str(b))
         return self.sawtooth(thetaBar - yaw)
 
     def getTransform(self):
