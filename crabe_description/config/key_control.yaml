@@ -1,0 +1,48 @@
+joy_teleop:
+  ros__parameters:
+
+    drive:
+      type: topic
+      interface_type: geometry_msgs/msg/Twist
+      topic_name: cmd_vel
+      deadman_buttons: [4]
+      axis_mappings:
+        linear-x:
+          axis: 1
+          scale: 0.5
+          offset: -0.03
+        angular-z:
+          axis: 0
+          scale: 0.5
+        linear-y:
+          axis: 2
+          scale: 0.3
+        linear-z:
+          button: 2
+          scale: 3.0
+
+    force_push:
+      type: topic
+      interface_type: geometry_msgs/msg/Wrench
+      topic_name: base_link_wrench
+      deadman_buttons: [5, 7]
+      axis_mappings:
+        force-x:
+          axis: 3
+          scale: 40
+        force-y:
+          axis: 2
+          scale: 40
+
+    stop:
+      type: topic
+      interface_type: geometry_msgs/msg/Twist
+      topic_name: cmd_vel
+      deadman_buttons: [0, 2]
+      message_value:
+        linear-x:
+          value: 0.0
+        angular-z:
+          value: 0.0
+        linear-y:
+          value: 0.0
