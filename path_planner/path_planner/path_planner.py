@@ -64,7 +64,7 @@ class path_planner(Node):
         self.tfBuffer = tf2_ros.Buffer()
         self.listener = tf2_ros.TransformListener(self.tfBuffer, self)
 
-        self.l_rob = .75
+        self.l_rob = 1.5
         self.obstacles_fixes()
         self.terrain = Polygon(rect_from_center(HEIGHT, WIDHT)).buffer(-self.l_rob)
         self.small_terrain = Polygon(rect_from_center(HEIGHT, WIDHT)).buffer(-3)
@@ -188,7 +188,6 @@ class path_planner(Node):
 
     def obj_callback(self, msg):
         A = (msg.x, msg.y)
-        cout("Got target")
         transform  = self.tfBuffer.lookup_transform('odom', 'base_link', tf2_ros.Time())
         self.pos =  (transform.transform.translation.x, transform.transform.translation.y)
         
