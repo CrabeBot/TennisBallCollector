@@ -32,7 +32,7 @@ class Crabe():
         lst = msg.data
         for i in range(len(lst)//3):
             ind = 3*i
-            self.balls[ind] = (lst[ind+1], lst[ind+2])
+            self.balls[int(lst[ind])] = (lst[ind+1], lst[ind+2])
 
     def __wp_callback(self, msg):
         wpData = msg.data
