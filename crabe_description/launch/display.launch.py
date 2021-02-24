@@ -14,6 +14,7 @@ from launch.substitutions import ThisLaunchFileDir
 # Sous ROS2, un launch file doit nécessairement contenir la fonction generate_launch_description() 
 # et retourner un LaunchDescription object.
 
+
 def generate_launch_description():
 
     pkg_share = FindPackageShare(package='crabe_description').find('crabe_description')
@@ -73,7 +74,7 @@ def generate_launch_description():
     ld.add_action(gazebo_spawn_entity_node)
     ld.add_action(robot_state_publisher_node)
     ld.add_action(rqt_robot_steering_node)
-    ld.add_action(rviz_node)
+    # ld.add_action(rviz_node)
 
     # La fonction retourne le LaunchDescription object, qui contient tous les noeuds à lancer.
     return ld
