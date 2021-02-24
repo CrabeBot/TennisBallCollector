@@ -13,7 +13,7 @@ class Crabe():
         self.node = node
         
         self.waypoints = []
-        self.balls = []
+        self.balls = [None for i in range(10)]
         
         self.tfBuffer = tf2_ros.Buffer()
         self.listener = tf2_ros.TransformListener(self.tfBuffer, self.node)

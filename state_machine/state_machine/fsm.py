@@ -3,7 +3,6 @@
 from transitions import Machine, State
 import rclpy
 from rclpy.node import Node
-from rclpy.timer import Rate
 import numpy as np
 
 from state_machine.crabe import Crabe
@@ -96,11 +95,17 @@ class CrabeBotFSM(Node):
 
         self.get_logger().info("J'attends de détecter une balle !")
 
-        while all(v is None for v in self.crabe.getBalls()):
-            self.rate.sleep()
 
-        self.ball_detected()
+        timer_period = 0.1  # seconds
+        timer = None
 
+        def checkFound():
+            if any(self.crabe.getBalls()) : 
+                timer.destroy()
+                self.get_logger().info("A ball has been detected")
+                self.ball_detected()
+            
+        timer = self.create_timer(timer_period, checkFound)
     
     def state2_enter_callback(self):
         # UNE BALLE A ÉTÉ DÉTECTÉE ET LE ROBOT SE DIRIGE VERS CELLE-CI
@@ -116,7 +121,7 @@ class CrabeBotFSM(Node):
 
         # On calcule quelle balle est la plus proche du robot : ce sera notre target
         # On enregistre l'indice associé à cette balle : pas de changement de cible en cours de route
-        self.closest_ball_index = compute_closest_ball_index(self.crabe.getPos(), self.crabe.getBalls())
+        self.closest_ball_index = self.compute_closest_ball_index(self.crabe.getPos(), self.crabe.getBalls())
 
         while (same_pos == False | self.crabe.isCatched() == False):
 
@@ -198,23 +203,29 @@ class CrabeBotFSM(Node):
         rate.sleep() # On dort un peu le temps que la trajectoire soit calculée
         self.waypoints = self.crabe.getWaypoints() # Récupération de la liste de waypoints calculés par le path_planner
 
-        while (self.crabe.isIn() == True):
 
-            self.crabe.setSpeed(2)
-            m = self.crabe.getPos()
+        timer_period = 0.1  # seconds
+        timer = None
+
+        def checkIsIn():
+            if not self.crabe.isIn() : 
+                self.crabe.setSpeed(2)
+                m = self.crabe.getPos()
+                
+                if np.dot(self.B - self.A, m - self.B) > 0 : # Waypoint validé, on passe au suivant
+                    self.compute_next_line() # Calcul de A et de B
+                    self.crabe.setLine(self.A, self.B) # Envoi de ligne au contrôleur
+            else:
+                self.crabe.setSpeed(0)
+                self.crabe.closeBackDoor()
+                self.nb_collected_balls = 0 # On remet à 0 le nombre de balles collectées dans le réservoir
+                print(self.nb_collected_balls)
+                print(self.nb_tot) # Le nombre total de balles ramassées n'est par contre pas remis à 0
+                self.not_in_discharge_area() # On trigger l'état 1 et la boucle est bouclée
+                timer.destroy()
             
-            if np.dot(self.B - self.A, m - self.B) > 0 : # Waypoint validé, on passe au suivant
-                self.compute_next_line() # Calcul de A et de B
-                self.crabe.setLine(self.A, self.B) # Envoi de ligne au contrôleur
-
-            self.rate.sleep()
+        timer = self.create_timer(timer_period, checkIsIn)
         
-        self.crabe.setSpeed(0)
-        self.crabe.closeBackDoor()
-        self.nb_collected_balls = 0 # On remet à 0 le nombre de balles collectées dans le réservoir
-        print(self.nb_collected_balls)
-        print(self.nb_tot) # Le nombre total de balles ramassées n'est par contre pas remis à 0
-        self.not_in_discharge_area() # On trigger l'état 1 et la boucle est bouclée
 
     # ------------------------------------------------------------------------------------------------------------------------
 
