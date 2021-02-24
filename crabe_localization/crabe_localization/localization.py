@@ -152,7 +152,7 @@ class localizer(Node):
             dx = v/dist * (0.02552044*dist + 0.03968411)
             self.x = x - dx[0]
             self.y = y - dx[1]
-            self.get_logger().info("x : {:.2f}, y : {:.2f}, theta : {:.2f}".format(self.x, self.y, self.theta))
+            #self.get_logger().info("x : {:.2f}, y : {:.2f}, theta : {:.2f}".format(self.x, self.y, self.theta))
             self.theta = mean(self.theta_history)
         except Exception as e:
             print("Robot not found : " + str(e))

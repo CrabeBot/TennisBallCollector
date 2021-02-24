@@ -6,7 +6,7 @@ from launch_ros.actions import Node
 
 
 def generate_launch_description():
-    player_localization = Node(package='player_localization', executable='player_localization',
+    player_localization = Node(package='player_localization', executable='p_localization',
                         output='screen')
 
     return LaunchDescription([

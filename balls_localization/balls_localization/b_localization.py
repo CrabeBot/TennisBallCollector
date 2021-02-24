@@ -140,10 +140,13 @@ class b_localizer(Node):
                     ind = np.argmin(distance[k,:])
                     matched.append(newcoords[ind])
                     distance[k,ind] = 100000
-                if len(self.old_coords)<len(newcoords):
+                if (newcoords.shape[0]>self.old_coords.shape[0]):
                     for l in range(newcoords.shape[0]):
                         if (np.max(distance[:,l])!=100000):
                             matched.append(newcoords[l])
+                #print("nc : ", newcoords.shape[0])
+                #print("nc : ", self.old_coords.shape[0])
+                #print("mtchd : ", len(matched))
                 self.old_coords = np.asarray(matched).reshape((newcoords.shape[0],1,2))
             
             # Create Balles Objects
@@ -170,15 +173,15 @@ class b_localizer(Node):
                     else :
                         #matched.append(self.old_coords[0][k])
                         zebbi = 1                        
-                print("dis : ", dis)
-                print("============")
+                #print("dis : ", dis)
+                #print("============")
                 #self.old_coords = np.asarray(matched).reshape((self.old_coords.shape[0],1,2))
                 #print("self.old_coords : ", self.old_coords)
                 for j in range(len(self.balls)):
                     #self.balls[j].coords = [self.old_coords[j][0][0], self.old_coords[j][0][1]]
                     if (j in dis):
                         for b in self.balls:
-                            print("ball ", b.num, " : ", b.coords[0], ", ", b.coords[1])
+                            #print("ball ", b.num, " : ", b.coords[0], ", ", b.coords[1])
                             if (b.num==j):
                                 x, y = self.old_coords[j][0][0], self.old_coords[j][0][1]
                                 self.balls[j].coords = [x, y]
@@ -208,9 +211,9 @@ class b_localizer(Node):
             
             lst_coords = Float32MultiArray()
             lst_coords.data = [1.0, 2.0, 3.0]
-            print("lst : ", lst)
+            #print("lst : ", lst)
             lst_coords.data = lst
-            print("lst_coords.data : ", len(lst_coords.data))
+            #print("lst_coords.data : ", len(lst_coords.data))
             self.balls_publisher.publish(lst_coords)
 
 

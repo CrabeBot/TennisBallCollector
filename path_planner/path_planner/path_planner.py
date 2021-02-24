@@ -61,9 +61,10 @@ class path_planner(Node):
 
         self.wps_pub = self.create_publisher(Float64MultiArray, "/waypoints", self.profile)
 
-        self.br = tf2_ros.TransformBroadcaster(self)
+        self.tfBuffer = tf2_ros.Buffer()
+        self.listener = tf2_ros.TransformListener(self.tfBuffer, self)
 
-        self.l_rob = 0.5
+        self.l_rob = .75
         self.obstacles_fixes()
         self.terrain = Polygon(rect_from_center(HEIGHT, WIDHT)).buffer(-self.l_rob)
         self.small_terrain = Polygon(rect_from_center(HEIGHT, WIDHT)).buffer(-3)
@@ -103,7 +104,6 @@ class path_planner(Node):
         
 
     def rec_path(self, A, B, d, sens=0):
-  
         # print("d : ", d)
         line = LineString((A, B))
         # if d>5:
@@ -188,6 +188,10 @@ class path_planner(Node):
 
     def obj_callback(self, msg):
         A = (msg.x, msg.y)
+        cout("Got target")
+        transform  = self.tfBuffer.lookup_transform('odom', 'base_link', tf2_ros.Time())
+        self.pos =  (transform.transform.translation.x, transform.transform.translation.y)
+        
         if not self.terrain.contains(Point(A)):
             
             cout("Objectif not in safe zone")
@@ -203,6 +207,7 @@ class path_planner(Node):
                 C = I.geoms[1]
                 if cdist(np.array(self.pos).reshape(1, -1), np.array(B).reshape(1, -1)) > cdist(np.array(self.pos).reshape(1, -1), np.array(C).reshape(1, -1)):
                     B, C = C, B
+                
                 pts, d1 = self.rec_path(self.pos, B, 0)
                 if pts != None:
                     pts.append(C)
@@ -239,7 +244,8 @@ class path_planner(Node):
 
     def send_wps(self):
         data_to_send = Float64MultiArray()  # the data to be sent, initialise the array
-        data_to_send.data = self.path.flatten() # assign the array with the value you want to send
+        data_to_send.data = [1.0, 2.0]
+        data_to_send.data = list(np.array(self.path.coords).flatten()) # assign the array with the value you want to send
         self.wps_pub.publish(data_to_send)
 
 def main(args=None):
