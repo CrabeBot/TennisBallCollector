@@ -35,7 +35,7 @@ class b_localizer(Node):
         self.profile = qos_profile_sensor_data
         self.im_subscriber = self.create_subscription(Image, "/zenith_camera/image_raw", self.im_callback, qos_profile=self.profile)
         
-        self.visualize = True
+        self.visualize = False
         self.bridge = cv_bridge.CvBridge()
         
         self.first_spin = True
@@ -208,7 +208,7 @@ class b_localizer(Node):
             
             lst_coords = Float32MultiArray()
             lst_coords.data = [1.0, 2.0, 3.0]
-            print("lst : ", lst)
+            #print("lst : ", lst)
             lst_coords.data = lst
             print("lst_coords.data : ", len(lst_coords.data))
             self.balls_publisher.publish(lst_coords)
