@@ -94,29 +94,10 @@ class CrabeBotFSM(Node):
         # on lit la position du robot et on calcule la position de la balle la plus proche
         # On envoie l'information au path planner qui calcule et renvoie une liste de waypoints
         # Puis on trigger le state2 en lançant self.ball_detected()
-        timer_period = 1  # seconds
-        timer = None
+
         self.cnt = 0
-        def waitForInit():
-            if self.cnt > 4:
-                timer.destroy()
-                self.get_logger().info("J'attends de détecter une balle !")
-
-
-                timer_period = 0.1  # seconds
-                timer1 = None
-
-                def checkFound():
-                    if any(self.crabe.getBalls()) : 
-                        timer1.destroy()
-                        self.get_logger().info("A ball has been detected")
-                        self.ball_detected()
-                    
-                timer1 = self.create_timer(timer_period, checkFound)
-            else:
-                self.cnt += 1
-
-        timer = self.create_timer(timer_period, waitForInit)
+        self.statenb = 1
+        self.get_logger().info("J'attends de détecter une balle !")
 
         
     
@@ -126,9 +107,15 @@ class CrabeBotFSM(Node):
 
     def loop(self):
         self.timer.cancel()
-        
+        if self.statenb == 1:
+            if self.cnt < 40:
+                self.cnt += 1
+            else :
+                if any(self.crabe.getBalls()):
+                    self.get_logger().info("Une balle a été détectée")
+                    self.ball_detected()
+
         if self.statenb==2:
-            self.get_logger().info("Loop")
             eps = 0.1
             if self.waitingFirstPath :
                 if self.crabe.newWaypoints :
@@ -140,8 +127,10 @@ class CrabeBotFSM(Node):
                     self.crabe.setLine(self.A, self.B)
                     self.waitingFirstPath = False
 
-            else :                                
-                if not self.isCatched(eps):
+            else :
+                self.get_logger().info(str(self.crabe.getBalls()[self.closest_ball_index]))                     
+                if self.isCatched(0.1):
+                    self.get_logger().info("Not catched")
                     self.target = self.crabe.getBalls()[self.closest_ball_index] # Cible à atteindre
                     self.crabe.setTarget(self.target) # Envoi du point à atteindre au path_planner
                     if self.crabe.newWaypoints :
@@ -156,6 +145,7 @@ class CrabeBotFSM(Node):
                         self.compute_next_line() # Calcul de A et de B
                         self.crabe.setLine(self.A, self.B) # Envoi de ligne au contrôleur
                     # Si la position du robot est égale à la position de la balle à un epsilon près, on considère qu'ils ont la même position
+                    eps = .7
                     if (self.closest_ball[0] - eps < self.crabe.getPos()[0] < self.closest_ball[0] + eps) and (self.closest_ball[1] - eps < self.crabe.getPos()[1] < self.closest_ball[1] + eps) :
                         self.crabe.openFrontDoor()
 
@@ -166,7 +156,7 @@ class CrabeBotFSM(Node):
 
                     self.crabe.closeFrontDoor()
                     self.ball_collected()
-                    self.statenb = 3
+                    self.statenb = 1
         
         self.timer = self.create_timer(0.1, self.loop)
 
